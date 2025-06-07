@@ -2,18 +2,35 @@ import BarChart from "@/components/charts/BarChart";
 import DoughnutChart from "@/components/charts/DoughnutChart";
 import LineChart from "@/components/charts/LineChart";
 import PolarAreaChart from "@/components/charts/PolarAreaChart";
+import SatInfo from "@/components/dashboard/SatInfo";
 import PageHeader from "@/components/PageHeader";
-import { Responsive, WidthProvider } from "react-grid-layout";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function Dashboard() {
-  const layout = [
-    { i: "lineChart", x: 0, y: 0, w: 3, h: 8, static: false },
-    { i: "barChart", x: 3, y: 0, w: 6, h: 8, static: false },
-    { i: "doughnutChart", x: 0, y: 8, w: 6, h: 8, static: false },
-    { i: "polarChart", x: 6, y: 8, w: 6, h: 8, static: false },
+  const defaultLayout: Layout[] = [
+    { w: 8, h: 10, x: 0, y: 0, i: "satInfo", moved: false, static: true },
+    { w: 3, h: 8, x: 0, y: 10, i: "lineChart", moved: false, static: false },
+    { w: 5, h: 8, x: 3, y: 10, i: "barChart", moved: false, static: false },
+    {
+      w: 3,
+      h: 8,
+      x: 5,
+      y: 18,
+      i: "doughnutChart",
+      moved: false,
+      static: false,
+    },
+    { w: 5, h: 8, x: 0, y: 18, i: "polarChart", moved: false, static: false },
   ];
+
+  const [currentLayout, setCurrentLayout] = useState<Layout[]>(defaultLayout);
+  const onLayoutChange = (newLayout: Layout[]) => {
+    setCurrentLayout(newLayout);
+  };
 
   // Sample data for Line Chart
   const lineChartData = {
@@ -107,13 +124,24 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader title="Dashboard" />
+      <Button
+        onClick={() => {
+          navigator.clipboard.writeText(JSON.stringify(currentLayout));
+        }}
+      >
+        Copy Layout
+      </Button>
       <ResponsiveGridLayout
-        className="layout bg-neutral-800 rounded-md"
-        layouts={{ lg: layout }}
+        className="layout rounded-md"
+        layouts={{ lg: currentLayout || defaultLayout }}
         cols={{ lg: 12, md: 10, sm: 8, xs: 6, xxs: 4 }}
         rowHeight={30}
         width={1600}
+        onLayoutChange={onLayoutChange}
       >
+        <div key="satInfo">
+          <SatInfo />
+        </div>
         <div key="lineChart">
           <LineChart title="Signal Monitoring" data={lineChartData} />
         </div>
