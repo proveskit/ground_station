@@ -1,4 +1,11 @@
-import { FiFileText, FiHome, FiSettings, FiTerminal } from "react-icons/fi";
+import {
+  FiDownload,
+  FiFileText,
+  FiHome,
+  FiPackage,
+  FiSettings,
+  FiTerminal,
+} from "react-icons/fi";
 import { Link, useLocation } from "react-router";
 import {
   Sidebar,
@@ -27,6 +34,16 @@ const navigationItems = [
     title: "Logs",
     url: "/logs",
     icon: FiFileText,
+  },
+  {
+    title: "Packets",
+    url: "/packets",
+    icon: FiPackage,
+  },
+  {
+    title: "Software Update",
+    url: "/software-update",
+    icon: FiDownload,
   },
 ];
 

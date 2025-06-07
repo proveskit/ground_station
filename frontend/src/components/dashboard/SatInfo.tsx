@@ -1,4 +1,5 @@
-import { Card, CardDescription, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Card, CardTitle } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export default function SatInfo() {
@@ -6,7 +7,11 @@ export default function SatInfo() {
     <Card className="h-full p-5 grid grid-cols-2 gap-4">
       <div className="flex flex-col gap-2">
         <CardTitle>Cubesat Name</CardTitle>
-        <CardDescription>Last packet received: 10 minutes ago</CardDescription>
+        <div className="w-full mt-2 h-58 border-dotted border-2 border-gray-600 rounded-md flex items-center justify-center">
+          <p>Image or model or smth will go here</p>
+        </div>
+        <p>Last packet received: 10 minutes ago</p>
+        <Button>View Packet</Button>
       </div>
       <Tabs defaultValue="2d" className="w-full">
         <TabsList className="w-full">

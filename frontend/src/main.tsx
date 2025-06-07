@@ -7,7 +7,9 @@ import "./index.css";
 import Commands from "./routes/Commands.tsx";
 import Dashboard from "./routes/Dashboard.tsx";
 import Logs from "./routes/Logs.tsx";
+import Packets from "./routes/Packets.tsx";
 import Settings from "./routes/Settings.tsx";
+import SoftwareUpdate from "./routes/SoftwareUpdate.tsx";
 import "/node_modules/react-grid-layout/css/styles.css";
 import "/node_modules/react-resizable/css/styles.css";
 
@@ -21,6 +23,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/" element={<Dashboard />} />
             <Route path="/commands" element={<Commands />} />
             <Route path="/logs" element={<Logs />} />
+            <Route path="/packets" element={<Packets />} />
+            <Route path="/software-update" element={<SoftwareUpdate />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>

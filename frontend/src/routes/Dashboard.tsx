@@ -5,12 +5,12 @@ import PolarAreaChart from "@/components/charts/PolarAreaChart";
 import SatInfo from "@/components/dashboard/SatInfo";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
 
-const ResponsiveGridLayout = WidthProvider(Responsive);
-
 export default function Dashboard() {
+  const ResponsiveGridLayout = useMemo(() => WidthProvider(Responsive), []);
+
   const defaultLayout: Layout[] = [
     { w: 8, h: 10, x: 0, y: 0, i: "satInfo", moved: false, static: true },
     { w: 3, h: 8, x: 0, y: 10, i: "lineChart", moved: false, static: false },
