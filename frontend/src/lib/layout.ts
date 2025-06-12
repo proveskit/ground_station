@@ -1,22 +1,28 @@
 import BarChart from "@/components/dashboard/charts/BarChart";
 import DoughnutChart from "@/components/dashboard/charts/DoughnutChart";
 import LineChart from "@/components/dashboard/charts/LineChart";
-import PolarAreaChart from "@/components/dashboard/charts/PolarAreaChart";
 import LocationInfo from "@/components/dashboard/custom/LocationInfo";
 import SimpleTextCard from "@/components/dashboard/custom/SimpleCard";
 import type { Layout } from "react-grid-layout";
 import type { DataStructure } from "../types/DataTypes";
 
-type ChartProps = {
+export type ChartProps = {
   data: DataStructure;
   title: string;
 };
 
-type TextProps = {
+export type TextProps = {
   title: string;
   data: {
     color: string;
     text: string;
+  };
+};
+
+export type SatInfoProps = {
+  data: {
+    lat: number;
+    lng: number;
   };
 };
 
@@ -25,7 +31,7 @@ type ComponentType = {
   bar: React.ComponentType<ChartProps>;
   doughnut: React.ComponentType<ChartProps>;
   polar: React.ComponentType<ChartProps>;
-  satInfo: React.ComponentType<ChartProps>;
+  satInfo: React.ComponentType<SatInfoProps>;
   simpleText: React.ComponentType<TextProps>;
 };
 
@@ -38,25 +44,6 @@ export type DashboardLayoutType = {
     layout: Layout;
   }[];
 };
-
-export function getChartComponent(
-  chartType: ChartType
-): ComponentType[ChartType] {
-  switch (chartType) {
-    case "line":
-      return LineChart;
-    case "bar":
-      return BarChart;
-    case "doughnut":
-      return DoughnutChart;
-    case "polar":
-      return PolarAreaChart;
-    case "satInfo":
-      return LocationInfo;
-    case "simpleText":
-      return SimpleTextCard;
-  }
-}
 
 export function generateLayout(
   items: {
@@ -131,6 +118,19 @@ export const dashboardLayout: DashboardLayoutType = {
         x: 18,
         y: 0,
         i: "last_frame_received",
+        moved: false,
+        static: false,
+      },
+    },
+    {
+      chartType: "simpleText",
+      component: SimpleTextCard,
+      layout: {
+        w: 24,
+        h: 10,
+        x: 0,
+        y: 20,
+        i: "random_thing",
         moved: false,
         static: false,
       },

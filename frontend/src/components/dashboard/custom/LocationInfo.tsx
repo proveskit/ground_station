@@ -1,14 +1,15 @@
 import { DarkCard } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { SatInfoProps } from "@/lib/layout";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
-export default function LocationInfo() {
+export default function LocationInfo({ data }: SatInfoProps) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "",
   });
 
-  const center = { lat: 29.889483671702582, lng: -97.94701096250438 };
+  const center = { lat: data.lat, lng: data.lng };
 
   return (
     <DarkCard className="h-full p-5">

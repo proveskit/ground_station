@@ -1,9 +1,13 @@
+import SimpleTextCard from "@/components/dashboard/custom/SimpleCard";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
   dashboardLayout,
   generateLayout,
+  type ChartProps,
   type DashboardLayoutType,
+  type SatInfoProps,
+  type TextProps,
 } from "@/lib/layout";
 import { sampleData } from "@/lib/sampleData";
 import { underScoreToTitleCase } from "@/lib/utils";
@@ -39,11 +43,37 @@ export default function Dashboard() {
               const data = sampleData[key].find(
                 (data) => data.title === item.layout.i
               )?.data;
+
+              if (!data)
+                return (
+                  <div key={item.layout.i}>
+                    <SimpleTextCard
+                      title={underScoreToTitleCase(item.layout.i)}
+                      data={{
+                        color: "text-red-500",
+                        text: `No data found for ${underScoreToTitleCase(
+                          item.layout.i
+                        )}`,
+                      }}
+                    />
+                  </div>
+                );
+
+              if (item.chartType === "satInfo") {
+                const SatInfoComponent =
+                  item.component as React.ComponentType<SatInfoProps>;
+                return (
+                  <div key={item.layout.i}>
+                    <SatInfoComponent
+                      data={data as { lat: number; lng: number }}
+                    />
+                  </div>
+                );
+              }
+
               if (item.chartType === "simpleText") {
-                const TextComponent = item.component as React.ComponentType<{
-                  title: string;
-                  data: { color: string; text: string };
-                }>;
+                const TextComponent =
+                  item.component as React.ComponentType<TextProps>;
                 return (
                   <div key={item.layout.i}>
                     <TextComponent
@@ -53,10 +83,8 @@ export default function Dashboard() {
                   </div>
                 );
               }
-              const ChartComponent = item.component as React.ComponentType<{
-                title: string;
-                data: DataStructure;
-              }>;
+              const ChartComponent =
+                item.component as React.ComponentType<ChartProps>;
               return (
                 <div key={item.layout.i}>
                   <ChartComponent

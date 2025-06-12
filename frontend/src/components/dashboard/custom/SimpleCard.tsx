@@ -17,14 +17,14 @@ export default function SimpleTextCard({
   };
 }) {
   return (
-    <DarkCard className="h-full">
+    <DarkCard className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent
         className={cn(
           data.color,
-          "w-full h-full flex justify-center items-center text-2xl font-bold"
+          "w-full flex flex-1 justify-center items-center text-2xl font-bold"
         )}
       >
         {data.text}

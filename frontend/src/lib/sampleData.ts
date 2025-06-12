@@ -3,6 +3,14 @@ import type { DataResponse } from "../types/DataTypes";
 export const sampleData: DataResponse = {
   statistics: [
     {
+      type: "satInfo",
+      title: "satellite_info",
+      data: {
+        lat: 29.889483671702582,
+        lng: -97.94701096250438,
+      },
+    },
+    {
       type: "chart",
       title: "satellite_signal_strength",
       chartType: "line",

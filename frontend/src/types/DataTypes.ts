@@ -28,5 +28,13 @@ export type DataResponse = {
           text: string;
         };
       }
+    | {
+        type: "satInfo";
+        title: string;
+        data: {
+          lat: number;
+          lng: number;
+        };
+      }
   >;
 };
