@@ -1,18 +1,34 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CardContent,
+  CardHeader,
+  CardTitle,
+  DarkCard,
+} from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-export default function SimpleCard({
+export default function SimpleTextCard({
   title,
-  children,
+  data,
 }: {
   title: string;
-  children: React.ReactNode;
+  data: {
+    color: string;
+    text: string;
+  };
 }) {
   return (
-    <Card>
+    <DarkCard className="h-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+      <CardContent
+        className={cn(
+          data.color,
+          "w-full h-full flex justify-center items-center text-2xl font-bold"
+        )}
+      >
+        {data.text}
+      </CardContent>
+    </DarkCard>
   );
 }
