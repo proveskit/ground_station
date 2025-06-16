@@ -37,6 +37,7 @@ export default function PolarAreaChart({ title, data }: PolarAreaChartProps) {
           color: "#f3f4f6", // Light gray text for dark theme
           font: {
             size: 12,
+            family: "'Inter', sans-serif",
           },
         },
       },
@@ -45,8 +46,13 @@ export default function PolarAreaChart({ title, data }: PolarAreaChartProps) {
         text: title,
         color: "#f9fafb", // Near white for title
         font: {
-          size: 16,
+          size: 24,
           weight: "bold" as const,
+          family: "'Inter', sans-serif",
+        },
+        padding: {
+          top: 16,
+          bottom: 16,
         },
       },
       tooltip: {
@@ -65,12 +71,18 @@ export default function PolarAreaChart({ title, data }: PolarAreaChartProps) {
         ticks: {
           color: "#d1d5db", // Light gray for axis labels
           backdropColor: "transparent", // Remove tick backdrop
+          font: {
+            family: "'Inter', sans-serif",
+          },
         },
         angleLines: {
           color: "rgba(75, 85, 99, 0.3)", // Subtle angle lines
         },
         pointLabels: {
           color: "#d1d5db", // Light gray for point labels
+          font: {
+            family: "'Inter', sans-serif",
+          },
         },
       },
     },

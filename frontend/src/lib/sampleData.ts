@@ -93,5 +93,21 @@ export const sampleData: DataResponse = {
         text: "25 minutes ago",
       },
     },
+    {
+      type: "text",
+      title: "total_frame_count",
+      data: {
+        color: "text-blue-500",
+        text: "352",
+      },
+    },
+    {
+      type: "text",
+      title: "satellite_position",
+      data: {
+        color: "text-blue-500",
+        text: "29.889483671702582, -97.94701096250438",
+      },
+    },
   ],
 };

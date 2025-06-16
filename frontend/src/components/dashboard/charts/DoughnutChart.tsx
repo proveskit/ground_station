@@ -30,6 +30,7 @@ export default function DoughnutChart({ title, data }: DoughnutChartProps) {
           color: "#f3f4f6", // Light gray text for dark theme
           font: {
             size: 12,
+            family: "'Inter', sans-serif",
           },
         },
       },
@@ -38,8 +39,13 @@ export default function DoughnutChart({ title, data }: DoughnutChartProps) {
         text: title,
         color: "#f9fafb", // Near white for title
         font: {
-          size: 16,
+          size: 24,
           weight: "bold" as const,
+          family: "'Inter', sans-serif",
+        },
+        padding: {
+          top: 16,
+          bottom: 16,
         },
       },
       tooltip: {

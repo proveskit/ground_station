@@ -24,7 +24,7 @@ export default function SimpleTextCard({
       <CardContent
         className={cn(
           data.color,
-          "w-full flex flex-1 justify-center items-center text-2xl font-bold"
+          "w-full flex flex-1 justify-center items-center text-2xl font-bold text-center"
         )}
       >
         {data.text}
