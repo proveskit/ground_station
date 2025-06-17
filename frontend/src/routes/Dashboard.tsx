@@ -24,8 +24,7 @@ export default function Dashboard() {
 
   const onLayoutChange = (layout: Layout[], category: string) => {
     const newLayout = currentLayout[category].map((item) => {
-      const foundLayout = layout.find((l) => l.i === item.layout.i);
-      if (!foundLayout) return item;
+      const foundLayout = layout.find((l) => l.i === item.layout.i)!;
       return {
         chartType: item.chartType,
         layout: foundLayout,

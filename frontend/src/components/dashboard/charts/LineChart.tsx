@@ -1,4 +1,4 @@
-import { DarkCard } from "@/components/ui/card";
+import { CardHeader, CardTitle, DarkCard } from "@/components/ui/card";
 import {
   CategoryScale,
   Chart as ChartJS,
@@ -42,28 +42,17 @@ export default function LineChart({ title, data }: LineChartProps) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top" as const,
+        position: "bottom" as const,
         labels: {
           color: "#f3f4f6", // Light gray text for dark theme
           font: {
-            size: 12,
+            size: 10,
             family: "'Inter', sans-serif",
           },
         },
       },
       title: {
-        display: true,
-        text: title,
-        color: "#f9fafb", // Near white for title
-        font: {
-          size: 24,
-          weight: "bold" as const,
-          family: "'Inter', sans-serif",
-        },
-        padding: {
-          top: 16,
-          bottom: 16,
-        },
+        display: false,
       },
       tooltip: {
         backgroundColor: "rgba(17, 24, 39, 0.9)", // Dark background for tooltips
@@ -100,8 +89,11 @@ export default function LineChart({ title, data }: LineChartProps) {
   };
 
   return (
-    <DarkCard className="p-6 w-full h-full overflow-hidden">
-      <div className="w-full h-full max-h-80">
+    <DarkCard className="w-full h-full overflow-hidden flex flex-col">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <div className="w-full h-full pt-4 px-2 flex-1">
         <Line options={options} data={data} />
       </div>
     </DarkCard>

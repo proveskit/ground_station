@@ -1,4 +1,4 @@
-import { DarkCard } from "@/components/ui/card";
+import { CardHeader, CardTitle, DarkCard } from "@/components/ui/card";
 import { ArcElement, Chart as ChartJS, Legend, Title, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
@@ -18,39 +18,36 @@ export default function ArcChart({ title, data }: ArcChartProps) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "top" as const,
-        labels: {
-          color: "#f3f4f6", // Light gray text for dark theme
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif",
-          },
-        },
+        display: false,
       },
       title: {
-        display: true,
-        text: title,
-        color: "#f9fafb", // Near white for title
-        font: {
-          size: 24,
-          weight: "bold" as const,
-          family: "'Inter', sans-serif",
-        },
-        padding: {
-          top: 16,
-          bottom: 16,
+        display: false,
+      },
+      centerText: {
+        id: "centerText",
+        beforeDraw(chart: ChartJS) {
+          const { ctx, width, height } = chart;
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = "bold 32px Inter";
+          ctx.fillStyle = "#f9fafb";
+          ctx.fillText(`${data}%`, width / 2, height / 2);
+          ctx.restore();
         },
       },
     },
   };
 
   return (
-    <DarkCard className="p-6 w-full h-full overflow-hidden">
-      <div className="w-full h-full max-h-80">
+    <DarkCard className="w-full h-full overflow-hidden flex flex-col">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <div className="w-full h-full p-4 flex-1">
         <Doughnut
           options={options}
           data={{
-            labels: ["Used", "Remaining"],
             datasets: [
               {
                 data: [data, 100 - data],
