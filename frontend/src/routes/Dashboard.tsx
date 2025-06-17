@@ -1,4 +1,3 @@
-import LocationInfo from "@/components/dashboard/custom/LocationInfo";
 import SimpleTextCard from "@/components/dashboard/custom/SimpleCard";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,6 @@ import {
 } from "@/lib/layout";
 import { sampleData } from "@/lib/sampleData";
 import { underScoreToTitleCase } from "@/lib/utils";
-import type { DataStructure } from "@/types/DataTypes";
 import { useMemo, useState } from "react";
 import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
 
@@ -83,30 +81,12 @@ export default function Dashboard() {
                   </div>
                 );
 
-              if (item.chartType === "satInfo") {
-                return (
-                  <div key={item.layout.i}>
-                    <LocationInfo data={data as { lat: number; lng: number }} />
-                  </div>
-                );
-              }
-
-              if (item.chartType === "simpleText") {
-                return (
-                  <div key={item.layout.i}>
-                    <SimpleTextCard
-                      title={underScoreToTitleCase(item.layout.i)}
-                      data={data as { color: string; text: string }}
-                    />
-                  </div>
-                );
-              }
               const ChartComponent = chartComponents[item.chartType];
               return (
                 <div key={item.layout.i}>
                   <ChartComponent
                     title={underScoreToTitleCase(item.layout.i)}
-                    data={data as DataStructure}
+                    data={data as any} // eslint-disable-line @typescript-eslint/no-explicit-any -- i legit can't find any way to type this
                   />
                 </div>
               );

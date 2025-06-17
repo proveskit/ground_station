@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export default function SimpleTextCard({
+export default function SimpleCard({
   title,
   data,
 }: {

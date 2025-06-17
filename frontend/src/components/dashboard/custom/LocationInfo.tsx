@@ -1,9 +1,15 @@
 import { DarkCard } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SatInfoProps } from "@/lib/layout";
+import type { SatInfoProps } from "@/types/CardTypes";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
-export default function LocationInfo({ data }: SatInfoProps) {
+export default function LocationInfo({
+  title,
+  data,
+}: {
+  title: string;
+  data: SatInfoProps;
+}) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "",
@@ -13,6 +19,7 @@ export default function LocationInfo({ data }: SatInfoProps) {
 
   return (
     <DarkCard className="h-full p-5">
+      <div className="hidden">{title}</div>
       <Tabs defaultValue="2d" className="w-full h-full flex flex-col">
         <TabsList className="w-full">
           <TabsTrigger value="2d">2D View</TabsTrigger>
