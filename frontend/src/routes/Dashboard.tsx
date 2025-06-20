@@ -1,6 +1,5 @@
 import SimpleTextCard from "@/components/dashboard/custom/SimpleCard";
 import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
 import {
   chartComponents,
   dashboardLayout,
@@ -43,13 +42,6 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader title="Dashboard" />
-      <Button
-        onClick={() => {
-          navigator.clipboard.writeText(JSON.stringify(currentLayout));
-        }}
-      >
-        Copy Layout
-      </Button>
       {Object.entries(currentLayout).map(([key, value]) => (
         <div key={key} className="flex flex-col gap-2 px-2">
           <h2 className="text-4xl font-bold">{underScoreToTitleCase(key)}</h2>
