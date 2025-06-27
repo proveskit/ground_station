@@ -1,16 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/websocket"
+	"strings"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
 
 type AppContext struct {
 	ConnectionChannels map[string]chan string
@@ -18,68 +14,41 @@ type AppContext struct {
 
 var Context = AppContext{}
 
-type wsReadResult struct {
-	messageType int
-	data        any
-	err         error
+type HandlerMethod int
+
+const (
+	GET HandlerMethod = iota
+	POST
+	PATCH
+	DELETE
+)
+
+func (m HandlerMethod) String() string {
+	switch m {
+	case GET:
+		return "get"
+	case POST:
+		return "post"
+	case PATCH:
+		return "patch"
+	case DELETE:
+		return "delete"
+	default:
+		return "unknown"
+	}
 }
 
-func wsLoop(conn *websocket.Conn, ch chan string) {
-	wsReadChan := make(chan wsReadResult)
-
-	go func() {
-		for {
-			msgType, p, err := conn.ReadMessage()
-			wsReadChan <- wsReadResult{msgType, p, err}
-			if err != nil {
-				return
-			}
+func handleFunc(method HandlerMethod, path string, handler func(w http.ResponseWriter, r *http.Request)) {
+	http.HandleFunc(fmt.Sprintf("/api/%s/%s", method.String(), path), func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != strings.ToUpper(method.String()) {
+			w.Header().Set("Allow", strings.ToUpper(method.String()))
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
 		}
-	}()
 
-	for {
-		select {
-		case readResult := <-wsReadChan:
-			if readResult.err != nil {
-				log.Println(readResult.err)
-				close(ch)
-				return
-			}
-			log.Println(readResult.data)
-		case value := <-ch:
-			if err := conn.WriteMessage(websocket.TextMessage, []byte(value)); err != nil {
-				log.Println(err)
-				close(ch)
-				return
-			}
-		}
-	}
-}
+		handler(w, r)
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("New websocket connection")
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	ch := make(chan string)
-	Context.ConnectionChannels[conn.LocalAddr().String()] = ch
-
-	go wsLoop(conn, ch)
-}
-
-func communicate(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	value := params.Get("value")
-
-	log.Println(value)
-
-	for _, ch := range Context.ConnectionChannels {
-		ch <- value
-	}
+	})
 
 }
 
@@ -87,9 +56,12 @@ func main() {
 	log.Println("Starting up backend server.")
 
 	Context.ConnectionChannels = make(map[string]chan string)
+	ConnectDB()
+	defer Database.Close(context.Background())
 
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/communicate", communicate)
+	http.HandleFunc("/ws", WsHandler)
+
+	handleFunc(GET, "packets", GetPackets)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
