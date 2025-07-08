@@ -6,7 +6,7 @@ import json
 import serial
 import serial.tools.list_ports
 
-from websocket import Websocket
+from websocket import Websocket, WebsocketPacket, EventType
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,9 @@ class BaseRadio:
         raise NotImplementedError
 
     def on_data(self, data: any):
+        raise NotImplementedError
+
+    def on_websocket_data(self, packet: WebsocketPacket):
         raise NotImplementedError
 
     def _monitor_connection(self):
@@ -111,21 +114,21 @@ class ProvesV4(BaseRadio):
         # Super long sleep in between each ctrl c for now to prevent accidentally
         # interrupting repl initialization. Maybe can just catch KeyboardInterrupt
         # in repl.py during initialization in the future.
-        self.write_to_serial(b"\x03")
+        self.write_to_serial("\x03")
         time.sleep(1)
-        self.write_to_serial(b"\x03")
+        self.write_to_serial("\x03")
         time.sleep(1)
-        self.write_to_serial(b"\x03")
+        self.write_to_serial("\x03")
         time.sleep(1)
-        self.write_to_serial(b"\x03")
+        self.write_to_serial("\x03")
         time.sleep(1)
-        self.write_to_serial(b"\x03")
+        self.write_to_serial("\x03")
         time.sleep(0.2)
-        self.write_to_serial(b"ground_station._log.colorized = False\r")
+        self.write_to_serial("ground_station._log.colorized = False\r")
         time.sleep(0.2)
-        self.write_to_serial(b"ground_station.run()\r")
+        self.write_to_serial("ground_station.run()\r")
         time.sleep(0.2)
-        self.write_to_serial(b"A\r")
+        self.write_to_serial("A\r")
 
     def on_data(self):
         partial_string = ""
@@ -187,6 +190,12 @@ class ProvesV4(BaseRadio):
         if self.data_callback:
             self.data_callback(data)
 
-    def write_to_serial(self, data):
+    def on_websocket_data(self, packet: WebsocketPacket):
+        if packet.event_type == EventType.WS_SEND_COMMAND:
+            print(packet.data["command"])
+            self.write_to_serial(packet.data["command"])
+            self.write_to_serial("\r")
+
+    def write_to_serial(self, data: str):
         if self.serial:
-            self.serial.write(data)
+            self.serial.write(data.encode("utf-8"))

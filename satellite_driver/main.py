@@ -26,7 +26,8 @@ def main():
         board_name = "proves_v4"
 
     ws = Websocket()
-    RADIOS[board_name](ws)
+    radio = RADIOS[board_name](ws)
+    ws.board_cb = radio.on_websocket_data
 
     while True:
         try:

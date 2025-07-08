@@ -1,6 +1,19 @@
 import PageHeader from "@/components/PageHeader";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 
 export default function Commands() {
+  const [cmd, setCmd] = useState<string>("");
+
+  const cmdMutation = useMutation({
+    mutationFn: async (cmd: string) => {
+      return fetch("/api/post/command", {
+        method: "POST",
+        body: JSON.stringify({ command: cmd }),
+      });
+    },
+  });
+
   return (
     <>
       <PageHeader
@@ -8,12 +21,20 @@ export default function Commands() {
         description="Manage and execute system commands"
       />
       <div className="flex-1 p-4">
-        <div className="rounded-lg border border-dashed p-8 text-center">
-          <h3 className="text-lg font-medium">Commands Interface</h3>
-          <p className="text-muted-foreground mt-2">
-            Command management functionality will be implemented here.
-          </p>
-        </div>
+        <p>Send command</p>
+        <p>Command: {cmd}</p>
+        <input
+          type="text"
+          onChange={(e) => setCmd(e.target.value)}
+          className="border-2"
+        />
+        <button
+          onClick={() => {
+            cmdMutation.mutate(cmd);
+          }}
+        >
+          Send Command
+        </button>
       </div>
     </>
   );

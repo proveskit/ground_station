@@ -59,9 +59,9 @@ func main() {
 	ConnectDB()
 	defer Database.Close(context.Background())
 
-	http.HandleFunc("/ws", WsHandler)
-
+	handleFunc(GET, "ws", WsHandler)
 	handleFunc(GET, "packets", GetPackets)
+	handleFunc(POST, "command", SendCommand)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

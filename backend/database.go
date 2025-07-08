@@ -21,7 +21,7 @@ func ConnectDB() {
 	Database = conn
 }
 
-func AddPacket(packet ProvesPacket) {
+func AddPacket(packet WSProvesPacket) {
 	layout := "2006-01-02 15:04:05"
 	parsedTime, err := time.Parse(layout, packet.Time)
 	if err != nil {

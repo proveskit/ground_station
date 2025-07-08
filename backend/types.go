@@ -5,15 +5,20 @@ import "time"
 type EventType int
 
 const (
-	NewPacket EventType = iota
+	WSNewPacket EventType = iota
+	WSSendCommand
 )
 
-type WebsocketEvent struct {
-	EventType EventType    `json:"event_type,omitempty"`
-	Data      ProvesPacket `json:"data,omitempty"`
+type WebsocketPacket struct {
+	EventType EventType   `json:"event_type,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
 }
 
-type ProvesPacket struct {
+type WSSendCommandPacket struct {
+	Command string `json:"command,omitempty"`
+}
+
+type WSProvesPacket struct {
 	Time     string `json:"time,omitempty"`
 	Level    string `json:"level,omitempty"`
 	Msg      string `json:"msg,omitempty"`

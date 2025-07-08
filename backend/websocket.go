@@ -44,16 +44,20 @@ func wsLoop(conn *websocket.Conn, ch chan string) {
 
 			log.Println(string(readResult.data))
 
-			var event WebsocketEvent
-			err := json.Unmarshal(readResult.data, &event)
+			var packet WebsocketPacket
+			err := json.Unmarshal(readResult.data, &packet)
 			if err != nil {
 				log.Println("Failed to parse websocket event")
 				continue
 			}
 
-			switch event.EventType {
-			case NewPacket:
-				AddPacket(event.Data)
+			switch packet.EventType {
+			case WSNewPacket:
+				if data, ok := packet.Data.(WSProvesPacket); ok {
+					AddPacket(data)
+				} else {
+					log.Println("Failed to parse proves packet")
+				}
 			}
 
 		case value := <-ch:
@@ -76,8 +80,8 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ch := make(chan string)
+	// Should be changed to some type of identifier, like maybe the name of the mission
 	Context.ConnectionChannels[conn.LocalAddr().String()] = ch
 
 	go wsLoop(conn, ch)
 }
-
