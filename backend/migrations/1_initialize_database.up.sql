@@ -1,0 +1,23 @@
+CREATE TABLE missions (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE telemetry_packet_schema (
+  id SERIAL PRIMARY KEY,
+  mission_id INT NOT NULL,
+  imported_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  json_schema JSONB NOT NULL,
+  CONSTRAINT fk_mission FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE telemetry_packet (
+  id SERIAL PRIMARY KEY,
+  mission_id INT NOT NULL,
+  schema_id INT NOT NULL,
+  received_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  packet_data TEXT NOT NULL,
+  CONSTRAINT fk_mission FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_packet_schema FOREIGN KEY (schema_id) REFERENCES telemetry_packet_schema(id) ON DELETE RESTRICT
+);

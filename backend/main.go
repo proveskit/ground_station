@@ -56,7 +56,7 @@ func main() {
 	log.Println("Starting up backend server.")
 
 	Context.ConnectionChannels = make(map[string]chan string)
-	ConnectDB()
+	InitializeDB()
 	defer Database.Close(context.Background())
 
 	handleFunc(GET, "ws", WsHandler)

@@ -6,13 +6,30 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
 	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 var Database *pgx.Conn
 
-func ConnectDB() {
+func InitializeDB() {
+	m, err := migrate.New("file://./migrations/", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatalf("Migrator failed to connect to database: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
+
+	log.Println("Successfully applied migrations.")
+
+	m.Close()
+
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Printf("Unable to connect to database")
