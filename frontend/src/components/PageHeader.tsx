@@ -6,7 +6,7 @@ export default function PageHeader({
   description?: string;
 }) {
   return (
-    <div className="border-b p-4 mb-2">
+    <div className="border-b p-4 mb-2 w-full">
       <h1 className="text-2xl font-bold">{title}</h1>
       <p className="text-muted-foreground">{description}</p>
     </div>

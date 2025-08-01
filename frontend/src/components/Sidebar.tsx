@@ -19,44 +19,44 @@ import {
   SidebarMenuItem,
 } from "./ui/sidebar";
 
-const navigationItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: FiHome,
-  },
-  {
-    title: "Commands",
-    url: "/commands",
-    icon: FiTerminal,
-  },
-  {
-    title: "Logs",
-    url: "/logs",
-    icon: FiFileText,
-  },
-  {
-    title: "Packets",
-    url: "/packets",
-    icon: FiPackage,
-  },
-  {
-    title: "Software Update",
-    url: "/software-update",
-    icon: FiDownload,
-  },
-];
-
-const footerItems = [
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: FiSettings,
-  },
-];
-
-export default function AppSidebar() {
+export default function AppSidebar({ mid }: { mid: string }) {
   const location = useLocation();
+
+  const navigationItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: FiHome,
+    },
+    {
+      title: "Commands",
+      url: "/commands",
+      icon: FiTerminal,
+    },
+    {
+      title: "Logs",
+      url: "/logs",
+      icon: FiFileText,
+    },
+    {
+      title: "Packets",
+      url: "/packets",
+      icon: FiPackage,
+    },
+    {
+      title: "Software Update",
+      url: "/software-update",
+      icon: FiDownload,
+    },
+  ];
+
+  const footerItems = [
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: FiSettings,
+    },
+  ];
 
   return (
     <Sidebar variant="floating" collapsible="icon">
@@ -77,21 +77,24 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.url}
-                    tooltip={item.title}
-                    className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
-                  >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigationItems.map((item) => {
+                const path = `/${mid}${item.url === "/" ? "" : item.url}`;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === path}
+                      tooltip={item.title}
+                      className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
+                    >
+                      <Link to={path}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -99,21 +102,24 @@ export default function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          {footerItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname === item.url}
-                tooltip={item.title}
-                className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
-              >
-                <Link to={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {footerItems.map((item) => {
+            const path = `/${mid}${item.url === "/" ? "" : item.url}`;
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === path}
+                  tooltip={item.title}
+                  className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
+                >
+                  <Link to={path}>
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
