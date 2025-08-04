@@ -38,21 +38,72 @@ func InitializeDB() {
 	Database = conn
 }
 
-func AddPacket(packet WSProvesPacket) {
+func DBAddMission(name string) error {
+	_, err := Database.Exec(context.Background(), "INSERT INTO missions (name) VALUES ($1)", name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func DBGetMissions() ([]DBMission, error) {
+	missions := []DBMission{}
+
+	rows, err := Database.Query(context.Background(), "SELECT * FROM missions ORDER BY id")
+	if err != nil {
+		log.Println(err)
+		return missions, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var m DBMission
+		err := rows.Scan(&m.Id, &m.Name, &m.CreatedAt)
+		if err != nil {
+			log.Printf("Failed to scan row: %v", err)
+			return missions, err
+		}
+
+		missions = append(missions, m)
+
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Error during rows iteration: %v", err)
+		return missions, err
+	}
+
+	return missions, nil
+
+}
+
+func DBGetMission(id int) (DBMission, error) {
+	var mission DBMission
+	err := Database.QueryRow(context.Background(), "SELECT * FROM missions WHERE id = $1", id).Scan(&mission.Id, &mission.Name, &mission.CreatedAt)
+	if err != nil {
+		return mission, err
+	}
+
+	return mission, nil
+}
+
+func AddPacket(packet WSProvesPacket) error {
 	layout := "2006-01-02 15:04:05"
 	parsedTime, err := time.Parse(layout, packet.Time)
 	if err != nil {
 		log.Println("Failed to parse time")
-		return
+		return err
 	}
 
 	_, err = Database.Exec(context.Background(), "INSERT INTO packets (time, packet) VALUES ($1, $2)", parsedTime, packet.Response)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 
 	log.Println("Successfully added packet to database")
+	return nil
 }
 
 func GetPacketsDB(page int) ([]DBProvesPacket, error) {

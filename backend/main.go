@@ -61,6 +61,9 @@ func main() {
 
 	handleFunc(GET, "ws", WsHandler)
 	handleFunc(GET, "packets", GetPackets)
+	handleFunc(GET, "missions", GetMissions)
+	handleFunc(GET, "mission", GetMission)
+	handleFunc(POST, "mission", AddMission)
 	handleFunc(POST, "command", SendCommand)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

@@ -9,6 +9,12 @@ const (
 	WSSendCommand
 )
 
+type DBMission struct {
+	Id        int       `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+}
+
 type WebsocketPacket struct {
 	EventType EventType   `json:"event_type,omitempty"`
 	Data      interface{} `json:"data,omitempty"`

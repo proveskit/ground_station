@@ -5,6 +5,7 @@ import {
   FiPackage,
   FiSettings,
   FiTerminal,
+  FiLogIn,
 } from "react-icons/fi";
 import { Link, useLocation } from "react-router";
 import {
@@ -18,8 +19,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
+import { SignedIn, SignedOut, UserButton } from "@clerk/react-router";
+import type { MissionType } from "@/types/ApiTypes";
 
-export default function AppSidebar({ mid }: { mid: string }) {
+export default function AppSidebar({ mission }: { mission: MissionType }) {
   const location = useLocation();
 
   const navigationItems = [
@@ -68,7 +71,7 @@ export default function AppSidebar({ mid }: { mid: string }) {
             </span>
           </div>
           <span className="font-semibold whitespace-nowrap overflow-hidden transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
-            Ground Station
+            {mission.name}
           </span>
         </div>
       </SidebarHeader>
@@ -78,7 +81,7 @@ export default function AppSidebar({ mid }: { mid: string }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => {
-                const path = `/${mid}${item.url === "/" ? "" : item.url}`;
+                const path = `/${mission.id}${item.url === "/" ? "" : item.url}`;
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
@@ -103,7 +106,7 @@ export default function AppSidebar({ mid }: { mid: string }) {
       <SidebarFooter>
         <SidebarMenu>
           {footerItems.map((item) => {
-            const path = `/${mid}${item.url === "/" ? "" : item.url}`;
+            const path = `/${mission.id}${item.url === "/" ? "" : item.url}`;
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
@@ -120,6 +123,37 @@ export default function AppSidebar({ mid }: { mid: string }) {
               </SidebarMenuItem>
             );
           })}
+          <SidebarMenuItem key={"home"}>
+            <SidebarMenuButton
+              asChild
+              tooltip={"Home"}
+              className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
+            >
+              <Link to={"/"}>
+                <FiHome />
+                <span>Home</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem key="loginButton">
+            <>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+              <SignedOut>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Login"
+                  className="!text-white hover:!text-white [&>svg]:!text-white data-[active=true]:!text-white"
+                >
+                  <Link to={`/login?url=${location.pathname}`}>
+                    <FiLogIn />
+                    <span>Login</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SignedOut>
+            </>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
