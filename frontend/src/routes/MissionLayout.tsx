@@ -15,13 +15,11 @@ export default function MissionLayout() {
   >({
     queryKey: ["api", "mission", mid],
     queryFn: async () => {
-      const res = await fetch(`api/get/mission?id=${mid}`);
+      const res = await fetch(`/api/get/mission?id=${mid}`);
       if (!res.ok) {
         throw new Error("Failed to get mission");
       }
-
       const body = await res.json();
-      console.log(body);
       return body;
     },
     select: (apiData): MissionType => {

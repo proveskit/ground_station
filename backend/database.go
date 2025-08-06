@@ -88,6 +88,27 @@ func DBGetMission(id int) (DBMission, error) {
 	return mission, nil
 }
 
+func DBAddSchema(id int, schema string) error {
+	_, err := Database.Exec(context.Background(), "INSERT INTO telemetry_packet_schema (mission_id, json_schema) VALUES ($1, $2)", id, schema)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DBGetSchema(id int) (DBSchema, error) {
+	var schema struct {
+		MissionId int    `json:"mission_id"`
+		Schema    string `json:"schema"`
+	}
+
+	err := Database.QueryRow(context.Background(), "SELECT mission_id, json_schema FROM telemetry_packet_schema WHERE mission_id = $1", id).Scan(&schema.MissionId, &schema.Schema)
+	if err != nil {
+		return schema, err
+	}
+	return schema, nil
+}
+
 func AddPacket(packet WSProvesPacket) error {
 	layout := "2006-01-02 15:04:05"
 	parsedTime, err := time.Parse(layout, packet.Time)

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func AddMission(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +86,74 @@ func GetMission(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, string(jsonData))
+}
+
+func GetSchema(w http.ResponseWriter, r *http.Request) {
+	missionIdStr := r.URL.Query().Get("id")
+	if missionIdStr == "" {
+		http.Error(w, "Missing 'id' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	missionId, err := strconv.Atoi(missionIdStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid input for mission id: %v", missionIdStr), http.StatusBadRequest)
+		return
+	}
+
+	schema, err := DBGetSchema(missionId)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			schema = DBSchema{
+				MissionId: missionId,
+				Schema:    "",
+			}
+		} else {
+			http.Error(w, "Failed to get schema", http.StatusInternalServerError)
+			fmt.Printf("Error getting schema: %v", err)
+			return
+		}
+	}
+
+	jsonData, err := json.Marshal(schema)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to process schema", http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, string(jsonData))
+}
+
+func PatchSchema(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read body", http.StatusInternalServerError)
+		return
+	}
+
+	var parsedBody struct {
+		MissionId int    `json:"missionId"`
+		Schema    string `json:"schema"`
+	}
+
+	err = json.Unmarshal(body, &parsedBody)
+	if err != nil {
+		http.Error(w, "Failed to parse body", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	err = DBAddSchema(parsedBody.MissionId, parsedBody.Schema)
+	if err != nil {
+		http.Error(w, "Failed to add schema to db", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	io.WriteString(w, "Successfully added packet schema")
 }
 
 func GetPackets(w http.ResponseWriter, r *http.Request) {

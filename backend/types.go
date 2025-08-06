@@ -15,6 +15,11 @@ type DBMission struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
+type DBSchema struct {
+	MissionId int    `json:"mission_id"`
+	Schema    string `json:"schema"`
+}
+
 type WebsocketPacket struct {
 	EventType EventType   `json:"event_type,omitempty"`
 	Data      interface{} `json:"data,omitempty"`
