@@ -4,7 +4,7 @@ import Dropdown from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MinusIcon } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useParams } from "react-router";
 
 export default function Settings() {
@@ -199,77 +199,80 @@ function PacketSettings() {
   }
 
   return (
-    <div className="w-full flex flex-col p-2 gap-3 bg-neutral-900 rounded-md border">
-      {schema.map((s, idx) => (
-        <>
-          <div key={idx} className="flex gap-3 w-76">
-            <Input
-              value={s.name}
-              onChange={(e) => handleNameChange(idx, e.target.value)}
-              className="text-sm"
-            />
-            <Dropdown
-              items={TYPES}
-              selected={s.type}
-              onSelect={(value) => handleTypeChange(idx, value)}
-            />
-            <Button variant="ghost" onClick={() => handleRemoveField(idx)}>
-              <MinusIcon />
-            </Button>
-          </div>
-          {s.enumValues && (
-            <div className="flex flex-col gap-2 w-42 bg-neutral-800 rounded-md p-2">
-              {s.enumValues.map((e, eIdx) => (
-                <div className="flex">
-                  <Input
-                    value={e}
-                    className="text-sm"
-                    onChange={(evt) =>
-                      handleEnumChange(idx, eIdx, evt.target.value)
-                    }
-                  />
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleRemoveEnumValue(idx, eIdx)}
-                  >
-                    <MinusIcon />
+    <div className="w-full p-2 bg-neutral-900 rounded-md border">
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex-1 flex flex-col gap-3">
+          {schema.map((s, idx) => (
+            <Fragment key={idx}>
+              <div className="flex gap-3 w-76">
+                <Input
+                  value={s.name}
+                  onChange={(e) => handleNameChange(idx, e.target.value)}
+                  className="text-sm"
+                />
+                <Dropdown
+                  items={TYPES}
+                  selected={s.type}
+                  onSelect={(value) => handleTypeChange(idx, value)}
+                />
+                <Button variant="ghost" onClick={() => handleRemoveField(idx)}>
+                  <MinusIcon />
+                </Button>
+              </div>
+              {s.enumValues && (
+                <div className="flex flex-col gap-2 w-42 bg-neutral-800 rounded-md p-2">
+                  {s.enumValues.map((e, eIdx) => (
+                    <div className="flex" key={eIdx}>
+                      <Input
+                        value={e}
+                        className="text-sm"
+                        onChange={(evt) =>
+                          handleEnumChange(idx, eIdx, evt.target.value)
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleRemoveEnumValue(idx, eIdx)}
+                      >
+                        <MinusIcon />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button onClick={() => handleAddEnumValue(idx)}>
+                    Add Enum Value
                   </Button>
                 </div>
-              ))}
-              <Button onClick={() => handleAddEnumValue(idx)}>
-                Add Enum Value
-              </Button>
-            </div>
-          )}
-        </>
-      ))}
-      <Button className="w-64" onClick={handleAddField}>
-        Add Field
-      </Button>
-      <Button className="w-64" onClick={handleGenerateExample}>
-        Generate Example Packet
-      </Button>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h3 className="text-lg font-semibold">Schema</h3>
-          <pre>
-            <code className="text-sm">{JSON.stringify(schema, null, 2)}</code>
-          </pre>
+              )}
+            </Fragment>
+          ))}
+          <Button className="w-64" onClick={handleAddField}>
+            Add Field
+          </Button>
+          <Button className="w-64" onClick={handleGenerateExample}>
+            Generate Example Packet
+          </Button>
         </div>
-        {examplePacket && (
+        <div className="flex-1 flex flex-col gap-4">
           <div>
-            <h3 className="text-lg font-semibold">Example Packet</h3>
-            <pre>
-              <code className="text-sm">
-                {JSON.stringify(examplePacket, null, 2)}
-              </code>
+            <h3 className="text-lg font-semibold">Schema</h3>
+            <pre className="text-sm leading-snug">
+              <code>{JSON.stringify(schema, null, 2)}</code>
             </pre>
           </div>
-        )}
+          {examplePacket && (
+            <div>
+              <h3 className="text-lg font-semibold">Example Packet</h3>
+              <pre className="text-sm leading-snug">
+                <code>{JSON.stringify(examplePacket, null, 2)}</code>
+              </pre>
+            </div>
+          )}
+        </div>
       </div>
-      <Button onClick={() => schemaMutation.mutate(schema)}>
+      <Button onClick={() => schemaMutation.mutate(schema)} className="mt-4">
         Save Changes
       </Button>
     </div>
   );
 }
+
