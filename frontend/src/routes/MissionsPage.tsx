@@ -71,6 +71,9 @@ export default function MissionsPage() {
         title="Missions"
         items={
           <>
+            <Link to="/smallsat-demo">
+              <Button>SmallSat Demo</Button>
+            </Link>
             <NewMissionButton mutation={mutation} />
             <SignedIn>
               <UserButton />

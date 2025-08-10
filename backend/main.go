@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,7 +8,8 @@ import (
 )
 
 type AppContext struct {
-	ConnectionChannels map[string]chan string
+	ConnectionChannels         map[string]chan string
+	FrontendConnectionChannels map[string]chan string
 }
 
 var Context = AppContext{}
@@ -56,17 +56,10 @@ func main() {
 	log.Println("Starting up backend server.")
 
 	Context.ConnectionChannels = make(map[string]chan string)
-	InitializeDB()
-	defer Database.Close(context.Background())
+	Context.FrontendConnectionChannels = make(map[string]chan string)
 
 	handleFunc(GET, "ws", WsHandler)
-	handleFunc(GET, "packets", GetPackets)
-	handleFunc(GET, "missions", GetMissions)
-	handleFunc(GET, "mission", GetMission)
-	handleFunc(POST, "mission", AddMission)
-	handleFunc(POST, "command", SendCommand)
-	handleFunc(GET, "schema", GetSchema)
-	handleFunc(PATCH, "schema", PatchSchema)
+	handleFunc(GET, "smallsat_ws", FrontendWsHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

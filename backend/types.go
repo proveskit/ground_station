@@ -6,7 +6,9 @@ type EventType int
 
 const (
 	WSNewPacket EventType = iota
-	WSSendCommand
+	WSLeaderboardRefresh
+	WSReceiveName
+	WSSendBooths
 )
 
 type DBMission struct {

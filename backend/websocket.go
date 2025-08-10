@@ -58,6 +58,42 @@ func wsLoop(conn *websocket.Conn, ch chan string) {
 				} else {
 					log.Println("Failed to parse proves packet")
 				}
+			case WSLeaderboardRefresh:
+				log.Println("Broadcasting leaderboard refresh to frontend clients")
+				broadcastMessage := string(readResult.data)
+				for id, ch := range Context.FrontendConnectionChannels {
+					go func(c chan string, connId string) {
+						defer func() {
+							if r := recover(); r != nil {
+								log.Printf("Error sending to frontend client %s: %v. Likely a closed channel.", connId, r)
+							}
+						}()
+						select {
+						case c <- broadcastMessage:
+							// success
+						default:
+							log.Printf("Frontend connection %s channel full, dropping leaderboard refresh.", connId)
+						}
+					}(ch, id)
+				}
+			case WSSendBooths:
+				log.Println("Broadcasting send booths event to frontend clients")
+				broadcastMessage := string(readResult.data)
+				for id, ch := range Context.FrontendConnectionChannels {
+					go func(c chan string, connId string) {
+						defer func() {
+							if r := recover(); r != nil {
+								log.Printf("Error sending to frontend client %s: %v. Likely a closed channel.", connId, r)
+							}
+						}()
+						select {
+						case c <- broadcastMessage:
+							// success
+						default:
+							log.Printf("Frontend connection %s channel full, dropping send booths event.", connId)
+						}
+					}(ch, id)
+				}
 			}
 
 		case value := <-ch:

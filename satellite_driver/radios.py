@@ -75,6 +75,8 @@ class ProvesV4(BaseRadio):
             "Attempting to receive data with timeout",
         ]
 
+        self.last_processed_name = ""
+
     def start(self):
         if self.connected:
             return
@@ -183,6 +185,22 @@ class ProvesV4(BaseRadio):
         if data == "":
             return
 
+        if "No progress found for" in data:
+            name = " ".join(data[:-1].split()[4:])
+            self.ws.send_message(json.dumps(
+                {"event_type": 3, "data": {"name": name, "amt": 0}}))
+
+        if "You still have" in data:
+            split_string = data.split()
+            self.ws.send_message(json.dumps({"event_type": 3, "data": {
+                                 "name": self.last_processed_name, "amt": int(split_string[3])}}))
+            self.last_processed_name = ""
+
+        if "You have visited all" in data:
+            self.ws.send_message(json.dumps(
+                {"event_type": 3, "data": {"name": self.last_processed_name, "amt": 5}}))
+            self.last_processed_name = ""
+
         if "start the ground station" in data:
             self.write_to_serial("\x03")
             time.sleep(1)
@@ -212,6 +230,11 @@ class ProvesV4(BaseRadio):
             print(packet.data["command"])
             self.write_to_serial(packet.data["command"])
             self.write_to_serial("\r")
+        elif packet.event_type == EventType.WS_RECEIVE_NAME:
+            print(packet.data)
+            self.write_to_serial(packet.data)
+            self.write_to_serial("\r")
+            self.last_processed_name = packet.data
 
     def write_to_serial(self, data: str):
         if self.serial:

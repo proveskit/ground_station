@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 class EventType(enum.Enum):
     WS_NEW_PACKET = 0
     WS_SEND_COMMAND = 1
+    WS_RECEIVE_NAME = 2
+    WS_SEND_BOOTHS = 3
 
 
 class WebsocketPacket:

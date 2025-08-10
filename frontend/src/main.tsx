@@ -15,6 +15,8 @@ import "/node_modules/react-resizable/css/styles.css";
 import MissionsPage from "./routes/MissionsPage.tsx";
 import MissionLayout from "./routes/MissionLayout.tsx";
 import Login from "./routes/Login.tsx";
+import SmallSatDemo from "./routes/SmallSatDemo.tsx";
+import { Toaster } from "./components/ui/sonner.tsx";
 
 const queryClient = new QueryClient();
 
@@ -28,9 +30,11 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <QueryClientProvider client={queryClient}>
+          <Toaster />
           <Routes>
             <Route path="/" element={<MissionsPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/smallsat-demo" element={<SmallSatDemo />} />
             <Route path=":mid" element={<MissionLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="commands" element={<Commands />} />
