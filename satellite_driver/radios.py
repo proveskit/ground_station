@@ -63,6 +63,10 @@ class ProvesV4(BaseRadio):
         # (most likely due to either an active screen connection or multiple boards being connected)
         self.busy_ports = []
 
+        # Leaderboard parsing
+        self.parsing_leaderboard = False
+        self.leaderboard = []
+
         # Strings that on_data shouldn't print out (to lessen spam)
         self.ignore_list = [
             "No message received",
@@ -91,7 +95,7 @@ class ProvesV4(BaseRadio):
         try:
             self.serial = serial.Serial(
                 port=self.port,
-                baudrate=9600,
+                baudrate=19200,
                 timeout=1
             )
             self.connected = True
@@ -110,82 +114,95 @@ class ProvesV4(BaseRadio):
 
             raise e
 
-        # (Attempt) to go to ground station mode
-        # Super long sleep in between each ctrl c for now to prevent accidentally
-        # interrupting repl initialization. Maybe can just catch KeyboardInterrupt
-        # in repl.py during initialization in the future.
-        self.write_to_serial("\x03")
-        time.sleep(1)
-        self.write_to_serial("\x03")
-        time.sleep(1)
-        self.write_to_serial("\x03")
-        time.sleep(1)
-        self.write_to_serial("\x03")
-        time.sleep(1)
-        self.write_to_serial("\x03")
-        time.sleep(0.2)
-        self.write_to_serial("ground_station._log.colorized = False\r")
-        time.sleep(0.2)
-        self.write_to_serial("ground_station.run()\r")
-        time.sleep(0.2)
-        self.write_to_serial("A\r")
-
     def on_data(self):
-        partial_string = ""
-
         while self.connected:
             try:
                 if self.serial and self.serial.is_open:
-                    if self.serial.in_waiting:
-                        recv = self.serial.read(
-                            self.serial.in_waiting).decode("utf-8")
+                    # Read a line from the serial port. This will block until a newline is received,
+                    # or until the timeout (set to 1s in the serial.Serial constructor) is reached.
+                    line_bytes = self.serial.readline()
 
-                        if "\n" in recv:
-                            final_strings = []
-                            split = recv.split("\n")
+                    if line_bytes:
+                        line_str = line_bytes.decode('utf-8', errors='ignore')
 
-                            while len(split) > 1:
-                                if partial_string:
-                                    final_strings.append(
-                                        partial_string + split.pop(0))
-                                    partial_string = ""
-                                final_strings.append(split.pop(0))
-
-                            if len(split) == 1 and "\n" in split[0]:
-                                final_strings.append(split[0])
-                            else:
-                                partial_string = ""
-
-                            for s in final_strings:
-                                self.handle_data(s)
-
-                        else:
-                            partial_string += recv
-
-            except Exception as e:
+                        # Process the line after stripping whitespace
+                        stripped_line = line_str.strip()
+                        if stripped_line:
+                            self.handle_data(stripped_line)
+                else:
+                    # If the serial port is not open, wait a bit before checking again
+                    time.sleep(0.1)
+            except serial.SerialException as e:
+                logger.error(f"Serial port error: {e}")
                 self.connected = False
-                raise e
+            except Exception as e:
+                logger.error(f"An unexpected error occurred in on_data: {e}")
+                self.connected = False
 
     def handle_data(self, data):
+        if "Top 10 PROVES Explorers" in data:
+            self.parsing_leaderboard = True
+            self.leaderboard = []
+            logger.info("--- Started parsing leaderboard ---")
+            return
+
+        if self.parsing_leaderboard:
+            if data.startswith("-----------------------------"):
+                if self.leaderboard:
+                    logger.info("--- Finished parsing leaderboard ---")
+                    self.ws.send_message(json.dumps(
+                        {"event_type": 1, "data": self.leaderboard}))
+                    print(self.leaderboard)
+                    self.parsing_leaderboard = False
+                    self.leaderboard = []
+                return
+
+            try:
+                parts = data.split(' | ')
+                if len(parts) == 2:
+                    name_part = parts[0]
+                    amt_part = parts[1]
+
+                    # "1. this is me   " -> "this is me"
+                    name = name_part.split('.', 1)[1].strip()
+                    # "2 booths visited" -> 2
+                    amt = int(amt_part.split(' ')[0])
+
+                    self.leaderboard.append({"name": name, "amt": amt})
+                    logger.info(
+                        f"Parsed leaderboard entry: {{'name': '{name}', 'amt': {amt}}}")
+                else:
+                    logger.warning(
+                        f"Could not parse leaderboard line (unexpected format): {data}")
+                return
+            except Exception as e:
+                logger.warning(
+                    f"Failed to parse leaderboard line: '{data}'. Error: {e}")
+                return
+
         if data == "":
             return
 
-        if not any(ignore in data for ignore in self.ignore_list):
-            if "Received response" in data:
-                try:
-                    parsed_data = json.loads(data)
+        if "start the ground station" in data:
+            self.write_to_serial("\x03")
+            time.sleep(1)
+            self.write_to_serial("\x03")
 
-                    if not self.ws.connected:
-                        logger.warn("Websocket not connected for some reason")
-                    else:
-                        self.ws.send_message(json.dumps(
-                            {"event_type": 0, "data": parsed_data}))
+        if "Received response" in data:
+            try:
+                parsed_data = json.loads(data)
 
-                except Exception as e:
-                    logger.error(e)
+                if not self.ws.connected:
+                    logger.warn("Websocket not connected for some reason")
+                else:
+                    self.ws.send_message(json.dumps(
+                        {"event_type": 0, "data": parsed_data}))
 
-            data = data.replace("\\", "")
-            logger.info(f"Data from board: {data}")
+            except Exception as e:
+                logger.error(e)
+
+        data = data.replace("\\", "")
+        logger.info(f"Data from board: {data}")
 
         if self.data_callback:
             self.data_callback(data)
