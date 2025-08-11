@@ -20,32 +20,25 @@ import { Toaster } from "./components/ui/sonner.tsx";
 
 const queryClient = new QueryClient();
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Add clerk key to .env");
-}
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <QueryClientProvider client={queryClient}>
-          <Toaster />
-          <Routes>
-            <Route path="/" element={<MissionsPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/smallsat-demo" element={<SmallSatDemo />} />
-            <Route path=":mid" element={<MissionLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="commands" element={<Commands />} />
-              <Route path="logs" element={<Logs />} />
-              <Route path="packets" element={<Packets />} />
-              <Route path="software-update" element={<SoftwareUpdate />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </QueryClientProvider>
-      </ClerkProvider>
+      <QueryClientProvider client={queryClient}>
+        <Toaster />
+        <Routes>
+          <Route path="/" element={<MissionsPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/smallsat-demo" element={<SmallSatDemo />} />
+          <Route path=":mid" element={<MissionLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="commands" element={<Commands />} />
+            <Route path="logs" element={<Logs />} />
+            <Route path="packets" element={<Packets />} />
+            <Route path="software-update" element={<SoftwareUpdate />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>,
 );
