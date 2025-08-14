@@ -7,54 +7,21 @@ import serial
 import serial.tools.list_ports
 
 from websocket import Websocket, WebsocketPacket, EventType
+from config.settings import AppConfig
+from packet_parser import PacketParser
 
 logger = logging.getLogger(__name__)
 
 
-class BaseRadio:
-    def __init__(self, ws):
+class RadioManager():
+    def __init__(self, config: AppConfig, ws: Websocket):
         self.connected = False
+        self.config = config
         self.ws: Websocket = ws
         self.monitor_thread = threading.Thread(
             target=self._monitor_connection, daemon=True)
         self.monitor_thread.start()
 
-    # Start monitoring
-    def start(self):
-        raise NotImplementedError
-
-    # Stop monitoring
-    def stop(self):
-        raise NotImplementedError
-
-    def on_data(self, data: any):
-        raise NotImplementedError
-
-    def on_websocket_data(self, packet: WebsocketPacket):
-        raise NotImplementedError
-
-    def _monitor_connection(self):
-        while True:
-            if not self.connected:
-                try:
-                    self.start()
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to connect to board, retrying in 3 seconds: {e}")
-                    pass
-            time.sleep(3)
-
-
-class ProvesV4(BaseRadio):
-    def __init__(self, ws):
-        super().__init__(ws)
-
-        self.vid = 0x1209  # PROVES Kit VID
-        self.pids = [
-            0xE004,  # PROVES Kit v4 PID
-            0x0011,  # PROVES Kit Testing PID
-        ]
-        self.port = None
         self.serial = None
         self.read_thread = None
         self.data_callback = None
@@ -71,6 +38,17 @@ class ProvesV4(BaseRadio):
             "Attempting to receive data with timeout",
         ]
 
+    def _monitor_connection(self):
+        while True:
+            if not self.connected:
+                try:
+                    self.start()
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to connect to board, retrying in 3 seconds: {e}")
+                    pass
+            time.sleep(3)
+
     def start(self):
         if self.connected:
             return
@@ -79,20 +57,22 @@ class ProvesV4(BaseRadio):
 
         all_ports = serial.tools.list_ports.comports()
 
+        board_port = None
+        print(self.config.radio.vid)
         for port in all_ports:
-            if port.vid == self.vid and port.pid in self.pids and port.device not in self.busy_ports:
-                self.port = port.device
+            if port.vid == self.config.radio.vid and port.pid in self.config.radio.pids and port.device not in self.busy_ports:
+                board_port = port.device
                 break
 
-        if not self.port:
-            raise Exception(f"No device found with VID={hex(self.vid)} and PIDs={
-                            [hex(pid) for pid in self.pids]}")
+        if not board_port:
+            raise Exception(f"No device found with VID={hex(self.config.radio.vid)} and PIDs={
+                            [hex(pid) for pid in self.config.radio.pids]}")
 
         try:
             self.serial = serial.Serial(
-                port=self.port,
-                baudrate=9600,
-                timeout=1
+                port=board_port,
+                baudrate=self.config.radio.baudrate,
+                timeout=self.config.radio.timeout
             )
             self.connected = True
 
@@ -106,7 +86,6 @@ class ProvesV4(BaseRadio):
 
             if "Resource busy" in str(e):
                 self.busy_ports.append(self.port)
-                self.port = None
 
             raise e
 
@@ -157,7 +136,8 @@ class ProvesV4(BaseRadio):
                                 partial_string = ""
 
                             for s in final_strings:
-                                self.handle_data(s)
+                                if s != "":
+                                    self.handle_data(s)
 
                         else:
                             partial_string += recv
@@ -167,19 +147,22 @@ class ProvesV4(BaseRadio):
                 raise e
 
     def handle_data(self, data):
-        if data == "":
-            return
-
         if not any(ignore in data for ignore in self.ignore_list):
             if "Received response" in data:
                 try:
                     parsed_data = json.loads(data)
+                    valid = PacketParser(self.config).process_packet(
+                        parsed_data["response"])
+
+                    if not valid:
+                        logger.warn("Received packet not valid to schema")
+                        return
 
                     if not self.ws.connected:
                         logger.warn("Websocket not connected for some reason")
                     else:
-                        self.ws.send_message(json.dumps(
-                            {"event_type": 0, "data": parsed_data}))
+                        self.ws.send_message(
+                            parsed_data["response"], EventType.WS_NEW_PACKET)
 
                 except Exception as e:
                     logger.error(e)

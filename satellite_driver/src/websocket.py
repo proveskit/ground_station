@@ -6,12 +6,15 @@ import enum
 
 from websockets.sync.client import connect
 
+from config.settings import WebsocketConfig
+
 logger = logging.getLogger(__name__)
 
 
 class EventType(enum.Enum):
     WS_NEW_PACKET = 0
     WS_SEND_COMMAND = 1
+    WS_REQUEST_SCHEMA = 2
 
 
 class WebsocketPacket:
@@ -29,7 +32,9 @@ class WebsocketPacket:
 
 
 class Websocket:
-    def __init__(self):
+    def __init__(self, ws_config: WebsocketConfig):
+        self.ws_config = ws_config
+
         self.ws = None
         self.last_sent = time.monotonic()
 
@@ -45,7 +50,7 @@ class Websocket:
 
     def start(self):
         logger.info("Connecting to websocket")
-        self.ws = connect("ws://localhost:8080/api/get/ws")
+        self.ws = connect(self.ws_config.url)
 
     def close(self):
         logger.info("Disconnecting")
@@ -65,7 +70,7 @@ class Websocket:
                     self.close()
                     self.start()
 
-            time.sleep(60)
+            time.sleep(self.ws_config.ping_interval)
 
     def receive_messages(self):
         while True:
@@ -86,7 +91,7 @@ class Websocket:
     def connected(self):
         return self.ws is not None
 
-    def send_message(self, msg):
+    def send_message(self, data: str, msg_type: EventType):
         if not self.ws:
             logger.warn("No ws, not sending")
             return False
@@ -95,7 +100,7 @@ class Websocket:
             logger.warn("Resending message in 1s")
             time.sleep(1)
 
-        logger.debug(f"Sending msg: {msg}")
-        self.ws.send(msg)
+        logger.debug(f"Sending msg: {data}")
+        self.ws.send(json.dumps({"event_type": msg_type.value, "data": data}))
         self.last_sent = time.monotonic()
         return True
