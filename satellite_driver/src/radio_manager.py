@@ -153,6 +153,7 @@ class RadioManager():
                     parsed_data = json.loads(data)
                     valid = PacketParser(self.config).process_packet(
                         parsed_data["response"])
+                    print(parsed_data["response"])
 
                     if not valid:
                         logger.warn("Received packet not valid to schema")
@@ -162,7 +163,7 @@ class RadioManager():
                         logger.warn("Websocket not connected for some reason")
                     else:
                         self.ws.send_message(
-                            parsed_data["response"], EventType.WS_NEW_PACKET)
+                            json.dumps({"mission_id": self.config.mission_id, "packet": parsed_data["response"]}), EventType.WS_NEW_PACKET)
 
                 except Exception as e:
                     logger.error(e)

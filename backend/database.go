@@ -97,27 +97,19 @@ func DBAddSchema(id int, schema string) error {
 }
 
 func DBGetSchema(id int) (DBSchema, error) {
-	var schema struct {
-		MissionId int    `json:"mission_id"`
-		Schema    string `json:"schema"`
-	}
+	var schema DBSchema
 
-	err := Database.QueryRow(context.Background(), "SELECT mission_id, json_schema FROM telemetry_packet_schema WHERE mission_id = $1", id).Scan(&schema.MissionId, &schema.Schema)
+	err := Database.QueryRow(context.Background(), "SELECT id, mission_id, json_schema FROM telemetry_packet_schema WHERE mission_id = $1", id).Scan(&schema.Id, &schema.MissionId, &schema.Schema)
 	if err != nil {
 		return schema, err
 	}
 	return schema, nil
 }
 
-func AddPacket(packet WSProvesPacket) error {
+func DBAddPacket(missionId int, schemaId int, packet string) error {
 	layout := "2006-01-02 15:04:05"
-	parsedTime, err := time.Parse(layout, packet.Time)
-	if err != nil {
-		log.Println("Failed to parse time")
-		return err
-	}
 
-	_, err = Database.Exec(context.Background(), "INSERT INTO packets (time, packet) VALUES ($1, $2)", parsedTime, packet.Response)
+	_, err := Database.Exec(context.Background(), "INSERT INTO telemetry_packet (mission_id, schema_id, received_at, packet_data) VALUES ($1, $2, $3, $4)", missionId, schemaId, time.Now().Format(layout), packet)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -127,15 +119,15 @@ func AddPacket(packet WSProvesPacket) error {
 	return nil
 }
 
-func GetPacketsDB(page int) ([]DBProvesPacket, error) {
-	packets := []DBProvesPacket{}
+func DBGetPackets(missionId int, page int) ([]DBPacket, error) {
+	packets := []DBPacket{}
 
 	if page < 1 {
 		page = 1
 	}
 	offset := (page - 1) * 20
 
-	rows, err := Database.Query(context.Background(), "SELECT id, time, packet FROM packets ORDER BY id LIMIT 20 OFFSET $1", offset)
+	rows, err := Database.Query(context.Background(), "SELECT * FROM telemetry_packet WHERE mission_id = $1 ORDER BY id LIMIT 20 OFFSET $2", missionId, offset)
 	if err != nil {
 		log.Println(err)
 		return packets, err
@@ -143,8 +135,8 @@ func GetPacketsDB(page int) ([]DBProvesPacket, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var p DBProvesPacket
-		err := rows.Scan(&p.Id, &p.Time, &p.Packet)
+		var p DBPacket
+		err := rows.Scan(&p.Id, &p.MissionId, &p.SchemaId, &p.ReceivedAt, &p.PacketData)
 		if err != nil {
 			log.Printf("Error scanning packet row: %v", err)
 			return packets, err

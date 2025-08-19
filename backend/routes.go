@@ -157,13 +157,45 @@ func PatchSchema(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPackets(w http.ResponseWriter, r *http.Request) {
-	packets, err := GetPacketsDB(1)
+	missionIdStr := r.URL.Query().Get("id")
+	if missionIdStr == "" {
+		http.Error(w, "Missing 'id' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	missionId, err := strconv.Atoi(missionIdStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid input for mission id: %v", missionIdStr), http.StatusBadRequest)
+		return
+	}
+
+	packets, err := DBGetPackets(missionId, 1)
 	if err != nil {
 		io.WriteString(w, "Failed to get packets")
 		return
 	}
 
-	jsonData, err := json.Marshal(packets)
+	dbSchema, err := DBGetSchema(missionId)
+	if err != nil {
+		io.WriteString(w, "Failed to get schema")
+		return
+	}
+
+	// Doing it like this so that in the response the schema is returned
+	// as proper json and not just a string, could also just JSON.parse on
+	// the frontend instead
+	var schema any
+	_ = json.Unmarshal([]byte(dbSchema.Schema), &schema)
+
+	var response struct {
+		Schema  any        `json:"schema"`
+		Packets []DBPacket `json:"packets"`
+	}
+
+	response.Schema = schema
+	response.Packets = packets
+
+	jsonData, err := json.Marshal(response)
 	if err != nil {
 		log.Println(err)
 		io.WriteString(w, "Failed to encode packets")

@@ -16,6 +16,7 @@ type DBMission struct {
 }
 
 type DBSchema struct {
+	Id        int    `json:"id"`
 	MissionId int    `json:"mission_id"`
 	Schema    string `json:"schema"`
 }
@@ -36,8 +37,10 @@ type WSProvesPacket struct {
 	Response string `json:"response,omitempty"`
 }
 
-type DBProvesPacket struct {
-	Id     int       `json:"id,omitempty"`
-	Time   time.Time `json:"time,omitempty"`
-	Packet string    `json:"packet,omitempty"`
+type DBPacket struct {
+	Id         int       `json:"id,omitempty"`
+	MissionId  int       `json:"mission_id,omitempty"`
+	SchemaId   int       `json:"schema_id,omitempty"`
+	ReceivedAt time.Time `json:"received_at,omitempty"`
+	PacketData string    `json:"packet_data,omitempty"`
 }

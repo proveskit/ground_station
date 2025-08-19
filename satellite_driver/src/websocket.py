@@ -101,6 +101,7 @@ class Websocket:
             time.sleep(1)
 
         logger.debug(f"Sending msg: {data}")
+        print(json.dumps({"event_type": msg_type.value, "data": data}))
         self.ws.send(json.dumps({"event_type": msg_type.value, "data": data}))
         self.last_sent = time.monotonic()
         return True

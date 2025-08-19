@@ -19,6 +19,11 @@ type wsReadResult struct {
 	err         error
 }
 
+type Data struct {
+	MissionId int    `json:"mission_id"`
+	Packet    string `json:"packet,omitempty"`
+}
+
 func wsLoop(conn *websocket.Conn, ch chan string) {
 	wsReadChan := make(chan wsReadResult)
 
@@ -53,11 +58,41 @@ func wsLoop(conn *websocket.Conn, ch chan string) {
 
 			switch packet.EventType {
 			case WSNewPacket:
-				if data, ok := packet.Data.(WSProvesPacket); ok {
-					AddPacket(data)
-				} else {
-					log.Println("Failed to parse proves packet")
+				var data Data
+				log.Println(packet.Data)
+
+				dataBytes := []byte(packet.Data.(string))
+
+				err = json.Unmarshal(dataBytes, &data)
+				if err != nil {
+					log.Println("Failed to parse WSNewPacket", err)
+					return
 				}
+
+				schema, err := DBGetSchema(data.MissionId)
+				if err != nil {
+					log.Println("Failed to get schema", err)
+					return
+				}
+
+				var parsedSchema []SchemaField
+				err = json.Unmarshal([]byte(schema.Schema), &parsedSchema)
+				if err != nil {
+					log.Println("Failed to parse schema", err)
+					return
+				}
+
+				valid, err := ProcessPacket(data.Packet, parsedSchema)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				if !valid {
+					log.Println("Packet not valid", err)
+					return
+				}
+
+				DBAddPacket(data.MissionId, schema.Id, data.Packet)
 			}
 
 		case value := <-ch:
