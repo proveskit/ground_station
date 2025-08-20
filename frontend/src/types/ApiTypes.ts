@@ -9,3 +9,11 @@ export type MissionTypeApi = {
   name: string;
   createdAt: string;
 };
+
+export type Packet = {
+  id: number;
+  mission_id: number;
+  schema_id: number;
+  received_at: string;
+  packet_data: string;
+};

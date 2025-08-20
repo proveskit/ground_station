@@ -2,6 +2,7 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
+import type { PacketSchema } from "@/types/SchemaTypes";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MinusIcon } from "lucide-react";
 import { Fragment, useState } from "react";
@@ -22,12 +23,6 @@ export default function Settings() {
     </>
   );
 }
-
-type PacketSchema = {
-  name: string;
-  type: "int" | "float" | "string" | "enum" | "vec3";
-  enumValues?: string[];
-}[];
 
 const TYPES = [
   {
@@ -275,4 +270,3 @@ function PacketSettings() {
     </div>
   );
 }
-
