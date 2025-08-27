@@ -17,3 +17,15 @@ export type Packet = {
   received_at: string;
   packet_data: string;
 };
+
+export type CommandType = {
+  id: number;
+  name: string;
+  description?: string;
+  args?: {
+    name: string;
+    required: boolean;
+    type: "string" | "int";
+    defaultValue?: string;
+  }[];
+}[];
