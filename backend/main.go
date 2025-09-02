@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -57,7 +56,7 @@ func main() {
 
 	Context.ConnectionChannels = make(map[string]chan string)
 	InitializeDB()
-	defer Database.Close(context.Background())
+	defer Database.Close()
 
 	handleFunc(GET, "ws", WsHandler)
 	handleFunc(GET, "packets", GetPackets)
@@ -67,6 +66,10 @@ func main() {
 	handleFunc(POST, "command", SendCommand)
 	handleFunc(GET, "schema", GetSchema)
 	handleFunc(PATCH, "schema", PatchSchema)
+	handleFunc(GET, "commands", GetCommands)
+	handleFunc(PATCH, "commands", PatchCommands)
+	handleFunc(PATCH, "command", UpdateCommand)
+	handleFunc(DELETE, "command", DeleteCommand)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

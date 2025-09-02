@@ -11,24 +11,31 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func AddMission(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
+func parseRequestBody(r *http.Request, v interface{}) error {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error reading body", http.StatusInternalServerError)
-		log.Printf("Error reading body: %v", err)
-		return
+		return err
 	}
+
+	err = json.Unmarshal(body, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AddMission(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
 	var bodyStruct struct {
 		Name string `json:"name"`
 	}
 
-	err = json.Unmarshal(body, &bodyStruct)
+	err := parseRequestBody(r, &bodyStruct)
 	if err != nil {
 		http.Error(w, "Error parsing body", http.StatusInternalServerError)
-		log.Println("Failed to parse body")
+		log.Printf("Error parsing body: %v", err)
 		return
 	}
 
@@ -128,21 +135,15 @@ func GetSchema(w http.ResponseWriter, r *http.Request) {
 func PatchSchema(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Failed to read body", http.StatusInternalServerError)
-		return
-	}
-
 	var parsedBody struct {
 		MissionId int    `json:"missionId"`
 		Schema    string `json:"schema"`
 	}
 
-	err = json.Unmarshal(body, &parsedBody)
+	err := parseRequestBody(r, &parsedBody)
 	if err != nil {
 		http.Error(w, "Failed to parse body", http.StatusInternalServerError)
-		log.Println(err)
+		log.Printf("Error parsing body: %v", err)
 		return
 	}
 
@@ -209,21 +210,14 @@ func GetPackets(w http.ResponseWriter, r *http.Request) {
 func SendCommand(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error reading body", http.StatusInternalServerError)
-		log.Printf("Error reading body: %v", err)
-		return
-	}
-
 	var bodyStruct struct {
 		Command string `json:"command"`
 	}
 
-	err = json.Unmarshal(body, &bodyStruct)
+	err := parseRequestBody(r, &bodyStruct)
 	if err != nil {
 		http.Error(w, "Error parsing body", http.StatusInternalServerError)
-		log.Println("Failed to parse body")
+		log.Printf("Error parsing body: %v", err)
 		return
 	}
 
@@ -239,4 +233,126 @@ func SendCommand(w http.ResponseWriter, r *http.Request) {
 		ch <- string(data)
 	}
 
+}
+
+func PatchCommands(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	var bodyStruct struct {
+		MissionId int       `json:"missionId"`
+		Commands  []Command `json:"commands"`
+	}
+
+	err := parseRequestBody(r, &bodyStruct)
+	if err != nil {
+		http.Error(w, "Error parsing body", http.StatusInternalServerError)
+		log.Printf("Error parsing body: %v", err)
+		return
+	}
+
+	for _, cmd := range bodyStruct.Commands {
+		argsJson, err := json.Marshal(cmd.Args)
+		if err != nil {
+			http.Error(w, "Error marshaling command args", http.StatusInternalServerError)
+			log.Printf("Error marshaling args: %v", err)
+			return
+		}
+
+		err = DBAddCommand(bodyStruct.MissionId, cmd.Name, cmd.Description, string(argsJson), cmd.CmdString)
+		if err != nil {
+			http.Error(w, "Error adding command to database", http.StatusInternalServerError)
+			log.Printf("Error adding command: %v", err)
+			return
+		}
+	}
+
+	io.WriteString(w, "Successfully added commands")
+}
+
+func GetCommands(w http.ResponseWriter, r *http.Request) {
+	missionIdStr := r.URL.Query().Get("id")
+	if missionIdStr == "" {
+		http.Error(w, "Missing 'id' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	missionId, err := strconv.Atoi(missionIdStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid input for mission id: %v", missionIdStr), http.StatusBadRequest)
+		return
+	}
+
+	commands, err := DBGetCommands(missionId)
+	if err != nil {
+		http.Error(w, "Failed to get commands", http.StatusInternalServerError)
+		log.Printf("Error getting commands: %v", err)
+		return
+	}
+
+	jsonData, err := json.Marshal(commands)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Failed to process commands", http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, string(jsonData))
+}
+
+func UpdateCommand(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	var bodyStruct struct {
+		Id          int                   `json:"id"`
+		Name        string                `json:"name"`
+		Description string                `json:"description"`
+		Args        map[string]CommandArg `json:"args"`
+		CmdString   string                `json:"cmd_string"`
+	}
+
+	err := parseRequestBody(r, &bodyStruct)
+	if err != nil {
+		http.Error(w, "Error parsing body", http.StatusInternalServerError)
+		log.Printf("Error parsing body: %v", err)
+		return
+	}
+
+	argsJson, err := json.Marshal(bodyStruct.Args)
+	if err != nil {
+		http.Error(w, "Error marshaling command args", http.StatusInternalServerError)
+		log.Printf("Error marshaling args: %v", err)
+		return
+	}
+
+	err = DBUpdateCommand(bodyStruct.Id, bodyStruct.Name, bodyStruct.Description, string(argsJson), bodyStruct.CmdString)
+	if err != nil {
+		http.Error(w, "Error updating command", http.StatusInternalServerError)
+		log.Printf("Error updating command: %v", err)
+		return
+	}
+
+	io.WriteString(w, "Successfully updated command")
+}
+
+func DeleteCommand(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "Missing 'id' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid input for command id: %v", idStr), http.StatusBadRequest)
+		return
+	}
+
+	err = DBDeleteCommand(id)
+	if err != nil {
+		http.Error(w, "Error deleting command", http.StatusInternalServerError)
+		log.Printf("Error deleting command: %v", err)
+		return
+	}
+
+	io.WriteString(w, "Successfully deleted command")
 }

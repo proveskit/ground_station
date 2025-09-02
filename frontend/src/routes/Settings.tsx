@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import PacketSettings from "@/components/PacketSettings";
+import CommandSettings from "@/components/CommandSettings";
 
 interface SettingsSectionProps {
   title: string;
@@ -29,6 +30,13 @@ export default function Settings() {
         description="Modify your current packet structure"
       >
         <PacketSettings />
+      </SettingsSection>
+      
+      <SettingsSection
+        title="Commands"
+        description="Create and manage commands that can be sent to the board"
+      >
+        <CommandSettings />
       </SettingsSection>
     </>
   );

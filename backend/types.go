@@ -44,3 +44,23 @@ type DBPacket struct {
 	ReceivedAt time.Time `json:"received_at,omitempty"`
 	PacketData string    `json:"packet_data,omitempty"`
 }
+
+type Command struct {
+	Name        string                `json:"name,omitempty"`
+	Description string                `json:"description,omitempty"`
+	CmdString   string                `json:"cmd_string,omitempty"`
+	Args        map[string]CommandArg `json:"args,omitempty"`
+}
+
+type CommandArg struct {
+	Required bool `json:"required,omitempty"`
+}
+
+type DBCommand struct {
+	Id          int    `json:"id,omitempty"`
+	MissionId   int    `json:"mission_id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Args        string `json:"args,omitempty"`
+	CmdString   string `json:"cmd_string,omitempty"`
+}

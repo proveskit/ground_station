@@ -10,11 +10,11 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var Database *pgx.Conn
+var Database *pgxpool.Pool
 
 func InitializeDB() {
 	m, err := migrate.New("file://./migrations/", os.Getenv("DATABASE_URL"))
@@ -30,12 +30,12 @@ func InitializeDB() {
 
 	m.Close()
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	pool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
-		log.Printf("Unable to connect to database")
+		log.Fatalf("Unable to create connection pool: %v", err)
 	}
 
-	Database = conn
+	Database = pool
 }
 
 func DBAddMission(name string) error {
@@ -151,4 +151,65 @@ func DBGetPackets(missionId int, page int) ([]DBPacket, error) {
 
 	return packets, nil
 
+}
+
+func DBAddCommand(missionId int, name string, description string, args string, cmdString string) error {
+	_, err := Database.Exec(context.Background(),
+		"INSERT INTO commands (mission_id, name, description, args, cmd_string) VALUES ($1, $2, $3, $4, $5)",
+		missionId, name, description, args, cmdString)
+	if err != nil {
+		log.Printf("Error adding command: %v", err)
+		return err
+	}
+	return nil
+}
+
+func DBUpdateCommand(id int, name string, description string, args string, cmdString string) error {
+	_, err := Database.Exec(context.Background(),
+		"UPDATE commands SET name = $2, description = $3, args = $4, cmd_string = $5 WHERE id = $1",
+		id, name, description, args, cmdString)
+	if err != nil {
+		log.Printf("Error updating command: %v", err)
+		return err
+	}
+	return nil
+}
+
+func DBDeleteCommand(id int) error {
+	_, err := Database.Exec(context.Background(), "DELETE FROM commands WHERE id = $1", id)
+	if err != nil {
+		log.Printf("Error deleting command: %v", err)
+		return err
+	}
+	return nil
+}
+
+func DBGetCommands(missionId int) ([]DBCommand, error) {
+	commands := []DBCommand{}
+
+	rows, err := Database.Query(context.Background(),
+		"SELECT id, mission_id, name, description, args, cmd_string FROM commands WHERE mission_id = $1 ORDER BY id",
+		missionId)
+	if err != nil {
+		log.Printf("Error querying commands: %v", err)
+		return commands, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cmd DBCommand
+		err := rows.Scan(&cmd.Id, &cmd.MissionId, &cmd.Name, &cmd.Description, &cmd.Args, &cmd.CmdString)
+		if err != nil {
+			log.Printf("Error scanning command row: %v", err)
+			return commands, err
+		}
+		commands = append(commands, cmd)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error during command rows iteration: %v", err)
+		return commands, err
+	}
+
+	return commands, nil
 }
