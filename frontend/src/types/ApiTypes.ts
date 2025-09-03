@@ -18,14 +18,13 @@ export type Packet = {
   packet_data: string;
 };
 
-export type CommandType = {
+export type Command = {
   id: number;
+  mission_id: number;
   name: string;
   description?: string;
-  args?: {
-    name: string;
-    required: boolean;
-    type: "string" | "int";
-    defaultValue?: string;
-  }[];
-}[];
+  args: CommandArgs;
+  cmd_string: string;
+};
+
+export type CommandArgs = { [key: string]: { required: boolean } };

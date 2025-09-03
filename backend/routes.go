@@ -282,11 +282,25 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commands, err := DBGetCommands(missionId)
+	dbCommands, err := DBGetCommands(missionId)
 	if err != nil {
 		http.Error(w, "Failed to get commands", http.StatusInternalServerError)
 		log.Printf("Error getting commands: %v", err)
 		return
+	}
+
+	// Convert DBCommand to Command to properly unmarshal Args
+	var commands []Command
+	for _, dbCmd := range dbCommands {
+		var args map[string]CommandArg
+		_ = json.Unmarshal([]byte(dbCmd.Args), &args)
+		
+		commands = append(commands, Command{
+			Name:        dbCmd.Name,
+			Description: dbCmd.Description,
+			Args:        args,
+			CmdString:   dbCmd.CmdString,
+		})
 	}
 
 	jsonData, err := json.Marshal(commands)

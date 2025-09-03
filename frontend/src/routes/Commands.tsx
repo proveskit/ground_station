@@ -9,10 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { CommandType } from "@/types/ApiTypes";
+import { type Command } from "@/types/ApiTypes";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { formatDateTime } from "@/utils/formatDate";
+import { useParams } from "react-router";
+import { underScoreToTitleCase, useMakeQuery } from "@/lib/utils";
 
 interface SentCommand {
   id: number;
@@ -22,31 +24,29 @@ interface SentCommand {
   status: "success" | "pending" | "error";
 }
 
+const commandsFetchFn = async (mid: number) => {
+  const res = await fetch(`/api/get/commands?id=${mid}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch commands");
+  }
+  return await res.json();
+};
+
 export default function Commands() {
-  const [commands, setCommands] = useState<CommandType[]>([
-    { id: 1, name: "Ping", description: "Sends a ping to the system." },
-    {
-      id: 2,
-      name: "Set Power",
-      description: "Sets the power level.",
-      args: [{ name: "level", required: true, type: "int" }],
-    },
-    { id: 3, name: "Get Status", description: "Retrieves system status." },
-    {
-      id: 4,
-      name: "Set Modulation",
-      description: "Changes radio modulation (either FSK or LoRa)",
-      args: [{ name: "mode", required: true, type: "string" }],
-    },
-  ]);
-  const [selectedCommand, setSelectedCommand] = useState<CommandType | null>(
-    null
-  );
-  const [args, setArgs] = useState<Record<string, string>>({});
+  const { mid } = useParams();
+
+  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null);
+  const [args, setArgs] = useState<{ [key: string]: string }>({});
   const [commandHistory, setCommandHistory] = useState<SentCommand[]>([]);
   const [expandedHistoryId, setExpandedHistoryId] = useState<number | null>(
-    null
+    null,
   );
+
+  const commandsQuery = useMakeQuery<Command[]>("api/get/commands", () =>
+    commandsFetchFn(Number(mid)),
+  );
+
+  console.log(commandsQuery.data?.at(0)?.args);
 
   const cmdMutation = useMutation({
     mutationFn: async (cmd: {
@@ -74,9 +74,8 @@ export default function Commands() {
     },
   });
 
-  const handleCommandClick = (command: CommandType) => {
+  const handleCommandClick = (command: Command) => {
     setSelectedCommand(command);
-    setArgs({});
   };
 
   const handleArgChange = (name: string, value: string) => {
@@ -97,9 +96,9 @@ export default function Commands() {
     if (!selectedCommand || !selectedCommand.args) {
       return true;
     }
-    return selectedCommand.args
-      .filter((arg) => arg.required)
-      .every((arg) => args[arg.name]);
+    return Object.entries(selectedCommand.args)
+      .filter((arg) => arg[1].required)
+      .every((arg) => args[arg[0]]);
   };
 
   return (
@@ -113,15 +112,12 @@ export default function Commands() {
           <div className="p-4">
             <h3 className="font-semibold text-lg mb-2">Command History</h3>
             {commandHistory.map((cmd) => (
-              <div
-                key={cmd.id}
-                className="border-b border-neutral-700 py-2"
-              >
+              <div key={cmd.id} className="border-b border-neutral-700 py-2">
                 <div
                   className="flex justify-between items-center cursor-pointer"
                   onClick={() =>
                     setExpandedHistoryId(
-                      expandedHistoryId === cmd.id ? null : cmd.id
+                      expandedHistoryId === cmd.id ? null : cmd.id,
                     )
                   }
                 >
@@ -135,8 +131,8 @@ export default function Commands() {
                         cmd.status === "success"
                           ? "bg-green-500"
                           : cmd.status === "pending"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
                       }`}
                     ></span>
                   </div>
@@ -149,7 +145,9 @@ export default function Commands() {
                         {JSON.stringify(cmd.args, null, 2)}
                       </pre>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No arguments</p>
+                      <p className="text-sm text-muted-foreground">
+                        No arguments
+                      </p>
                     )}
                   </div>
                 )}
@@ -158,7 +156,9 @@ export default function Commands() {
           </div>
         </div>
         <div className="flex-1 p-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3 content-start">
-          {commands.map((command) => (
+          {commandsQuery.isPending && <p>Loading commands...</p>}
+          {commandsQuery.isError && <p>Error loading commands</p>}
+          {commandsQuery.data?.map((command) => (
             <Card
               key={command.id}
               onClick={() => handleCommandClick(command)}
@@ -167,31 +167,30 @@ export default function Commands() {
               }`}
             >
               <CardHeader>
-                <CardTitle>{command.name}</CardTitle>
+                <CardTitle>{underScoreToTitleCase(command.name)}</CardTitle>
                 <CardDescription>{command.description}</CardDescription>
               </CardHeader>
-              {selectedCommand?.id === command.id && (
+              {selectedCommand && selectedCommand.id === command.id && (
                 <CardContent>
-                  {selectedCommand.args?.map((arg) => (
-                    <div key={arg.name} className="grid gap-2">
-                      <label htmlFor={arg.name}>
-                        {arg.name} ({arg.type})
-                        {arg.required && (
+                  {Object.entries(selectedCommand.args).map((arg) => (
+                    <div key={arg[0]} className="grid gap-2">
+                      <label htmlFor={arg[0]}>
+                        {arg[0]}
+                        {arg[1].required && (
                           <span className="text-red-500">*</span>
                         )}
                       </label>
                       <Input
-                        id={arg.name}
-                        type={arg.type === "int" ? "number" : "text"}
+                        id={arg[0]}
                         onChange={(e) =>
-                          handleArgChange(arg.name, e.target.value)
+                          handleArgChange(arg[0], e.target.value)
                         }
                       />
                     </div>
                   ))}
                 </CardContent>
               )}
-              {selectedCommand?.id === command.id && (
+              {selectedCommand && selectedCommand.id === command.id && (
                 <CardFooter>
                   <Button
                     onClick={handleSendCommand}
