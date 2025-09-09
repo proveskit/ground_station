@@ -74,6 +74,7 @@ export default function Commands() {
 
   const handleCommandClick = (command: Command) => {
     setSelectedCommand(command);
+    // add args to state
   };
 
   const handleArgChange = (name: string, value: string) => {
@@ -91,13 +92,11 @@ export default function Commands() {
     }
   };
 
-  const areAllRequiredArgsFilled = () => {
+  const areAllArgsFilled = () => {
     if (!selectedCommand || !selectedCommand.args) {
       return true;
     }
-    return Object.entries(selectedCommand.args)
-      .filter((arg) => arg[1].required)
-      .every((arg) => args[arg[0]]);
+    return Object.values(args).every((str) => str !== "");
   };
 
   return (
@@ -171,19 +170,12 @@ export default function Commands() {
               </CardHeader>
               {selectedCommand && selectedCommand.id === command.id && (
                 <CardContent>
-                  {Object.entries(selectedCommand.args).map((arg) => (
-                    <div key={arg[0]} className="grid gap-2">
-                      <label htmlFor={arg[0]}>
-                        {arg[0]}
-                        {arg[1].required && (
-                          <span className="text-red-500">*</span>
-                        )}
-                      </label>
+                  {selectedCommand.args.map((arg) => (
+                    <div key={arg} className="grid gap-2">
+                      <label htmlFor={arg}>{arg}</label>
                       <Input
-                        id={arg[0]}
-                        onChange={(e) =>
-                          handleArgChange(arg[0], e.target.value)
-                        }
+                        id={arg}
+                        onChange={(e) => handleArgChange(arg, e.target.value)}
                       />
                     </div>
                   ))}
@@ -193,7 +185,7 @@ export default function Commands() {
                 <CardFooter>
                   <Button
                     onClick={handleSendCommand}
-                    disabled={!areAllRequiredArgsFilled()}
+                    disabled={!areAllArgsFilled()}
                   >
                     Send Command
                   </Button>

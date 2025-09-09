@@ -175,14 +175,12 @@ class RadioManager():
             self.data_callback(data)
 
     def on_websocket_data(self, packet: WebsocketPacket):
-        if packet.event_type == EventType.WS_SEND_COMMAND:
-            print(packet.data["command"])
-
-            match packet.data["command"]:
+        if packet.event_type == EventType.SEND_COMMAND:
+            match packet.payload["command"]:
                 case "change_radio_modulation":
-                    self.write_to_serial(packet.data["command"])
+                    self.write_to_serial("2")
                     self.write_to_serial("\r")
-                    self.write_to_serial(packet.data["args"]["modulation"])
+                    self.write_to_serial(packet.payload["args"]["modulation"])
                     self.write_to_serial("\r")
                 case _:
                     self.write_to_serial(packet.data["command"])

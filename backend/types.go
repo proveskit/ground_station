@@ -52,14 +52,10 @@ type DBPacket struct {
 }
 
 type Command struct {
-	Name        string                `json:"name,omitempty"`
-	Description string                `json:"description,omitempty"`
-	CmdString   string                `json:"cmd_string,omitempty"`
-	Args        map[string]CommandArg `json:"args,omitempty"`
-}
-
-type CommandArg struct {
-	Required bool `json:"required,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Description string   `json:"description,omitempty"`
+	CmdString   string   `json:"cmd_string,omitempty"`
+	Args        []string `json:"args,omitempty"`
 }
 
 type CommandPost struct {
@@ -68,10 +64,10 @@ type CommandPost struct {
 }
 
 type DBCommand struct {
-	Id          int    `json:"id,omitempty"`
-	MissionId   int    `json:"mission_id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Args        string `json:"args,omitempty"`
-	CmdString   string `json:"cmd_string,omitempty"`
+	Id          int      `json:"id,omitempty"`
+	MissionId   int      `json:"mission_id,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Args        []string `json:"args,omitempty"`
+	CmdString   string   `json:"cmd_string,omitempty"`
 }

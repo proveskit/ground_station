@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"time"
@@ -198,11 +199,23 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 
 	for rows.Next() {
 		var cmd DBCommand
-		err := rows.Scan(&cmd.Id, &cmd.MissionId, &cmd.Name, &cmd.Description, &cmd.Args, &cmd.CmdString)
+		var argString string
+
+		err := rows.Scan(&cmd.Id, &cmd.MissionId, &cmd.Name, &cmd.Description, &argString, &cmd.CmdString)
 		if err != nil {
 			log.Printf("Error scanning command row: %v", err)
 			return commands, err
 		}
+
+		log.Println(argString)
+
+		err = json.Unmarshal([]byte(argString), &cmd.Args)
+		if err != nil {
+			log.Printf("it didnt do the thing, %v", err)
+		}
+
+		log.Printf("%v", cmd.Args)
+
 		commands = append(commands, cmd)
 	}
 
@@ -216,7 +229,7 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 
 func DBGetCommandByName(cmdName string) (DBCommand, error) {
 	var command DBCommand
-	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Args, &command.Description, &command.CmdString)
+	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Description, &command.Args, &command.CmdString)
 	if err != nil {
 		return command, err
 	}

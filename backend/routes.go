@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -262,16 +261,13 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DBCommand to Command to properly unmarshal Args
+	// Convert DBCommand to Command
 	var commands []Command
 	for _, dbCmd := range dbCommands {
-		var args map[string]CommandArg
-		_ = json.Unmarshal([]byte(dbCmd.Args), &args)
-
 		commands = append(commands, Command{
 			Name:        dbCmd.Name,
 			Description: dbCmd.Description,
-			Args:        args,
+			Args:        dbCmd.Args,
 			CmdString:   dbCmd.CmdString,
 		})
 	}
@@ -289,13 +285,7 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 func UpdateCommand(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	var bodyStruct struct {
-		Id          int                   `json:"id"`
-		Name        string                `json:"name"`
-		Description string                `json:"description"`
-		Args        map[string]CommandArg `json:"args"`
-		CmdString   string                `json:"cmd_string"`
-	}
+	var bodyStruct DBCommand
 
 	err := parseRequestBody(r, &bodyStruct)
 	if err != nil {
@@ -363,12 +353,10 @@ func HandleCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(dbCommand.Args)
-	dbArgs := strings.SplitSeq(dbCommand.Args, ",")
-	log.Printf("%v", dbArgs)
+	log.Printf("%v", dbCommand.Args)
 
 	// Validate to make sure all args are present & no unknown args
-	for v := range dbArgs {
+	for _, v := range dbCommand.Args {
 		argValue, ok := bodyStruct.Args[v]
 		if !ok {
 			log.Printf("Unknown arg in args, %v %v", bodyStruct.Args, v)

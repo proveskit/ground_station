@@ -23,7 +23,7 @@ export type Command = {
   mission_id: number;
   name: string;
   description?: string;
-  args: CommandArgs;
+  args: string[];
   cmd_string: string;
 };
 

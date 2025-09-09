@@ -19,15 +19,19 @@ class EventType(str, Enum):
 class WebsocketPacket:
     def __init__(self, data: str):
         parsed_msg = json.loads(data)
-        evt_type = parsed_msg.get("event_type")
-        data = parsed_msg.get("data")
+        evt_type = parsed_msg.get("type")
+        payload_str = parsed_msg.get("payload")
+        timestamp = parsed_msg.get("timestamp")
 
         if evt_type is None:
             logger.warning("No type field in packet")
             return
 
+        payload = json.loads(payload_str)
+
         self.event_type = evt_type
-        self.data = data
+        self.payload = payload
+        self.timestamp = timestamp
 
 
 class Websocket:
