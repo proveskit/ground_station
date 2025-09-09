@@ -16,13 +16,13 @@ import { formatDateTime } from "@/utils/formatDate";
 import { useParams } from "react-router";
 import { underScoreToTitleCase, useMakeQuery } from "@/lib/utils";
 
-interface SentCommand {
+type SentCommand = {
   id: number;
   name: string;
   args: Record<string, string>;
   timestamp: Date;
   status: "success" | "pending" | "error";
-}
+};
 
 const commandsFetchFn = async (mid: number) => {
   const res = await fetch(`/api/get/commands?id=${mid}`);
@@ -45,8 +45,6 @@ export default function Commands() {
   const commandsQuery = useMakeQuery<Command[]>("api/get/commands", () =>
     commandsFetchFn(Number(mid)),
   );
-
-  console.log(commandsQuery.data?.at(0)?.args);
 
   const cmdMutation = useMutation({
     mutationFn: async (cmd: {
@@ -88,6 +86,7 @@ export default function Commands() {
         command: selectedCommand.name,
         args: args,
       };
+      console.log(commandToSend);
       cmdMutation.mutate(commandToSend);
     }
   };

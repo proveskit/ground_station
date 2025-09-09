@@ -238,6 +238,7 @@ export default function CommandSettings() {
         throw new Error("Failed to fetch commands");
       }
       const dbCommands = await response.json();
+      console.log(dbCommands);
 
       const commands: Commands = dbCommands.map((dbCmd: any) => ({
         id: dbCmd.id,

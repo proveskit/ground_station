@@ -2,12 +2,18 @@ package main
 
 import "time"
 
-type EventType int
+type EventType string
 
 const (
-	WSNewPacket EventType = iota
-	WSSendCommand
+	WSNewPacket   EventType = "new_packet"
+	WSSendCommand EventType = "send_command"
 )
+
+type WSMessage struct {
+	Type      EventType `json:"type,omitempty"`
+	Payload   any       `json:"payload,omitempty"`
+	Timestamp int64     `json:"timestamp,omitempty"`
+}
 
 type DBMission struct {
 	Id        int       `json:"id,omitempty"`
@@ -54,6 +60,11 @@ type Command struct {
 
 type CommandArg struct {
 	Required bool `json:"required,omitempty"`
+}
+
+type CommandPost struct {
+	Command string            `json:"command"`
+	Args    map[string]string `json:"args"`
 }
 
 type DBCommand struct {

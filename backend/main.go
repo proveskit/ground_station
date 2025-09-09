@@ -63,13 +63,13 @@ func main() {
 	handleFunc(GET, "missions", GetMissions)
 	handleFunc(GET, "mission", GetMission)
 	handleFunc(POST, "mission", AddMission)
-	handleFunc(POST, "command", SendCommand)
 	handleFunc(GET, "schema", GetSchema)
 	handleFunc(PATCH, "schema", PatchSchema)
 	handleFunc(GET, "commands", GetCommands)
 	handleFunc(PATCH, "commands", PatchCommands)
 	handleFunc(PATCH, "command", UpdateCommand)
 	handleFunc(DELETE, "command", DeleteCommand)
+	handleFunc(POST, "command", HandleCommand)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

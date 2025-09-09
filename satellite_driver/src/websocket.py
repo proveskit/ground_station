@@ -2,7 +2,7 @@ import threading
 import json
 import logging
 import time
-import enum
+from enum import Enum
 
 from websockets.sync.client import connect
 
@@ -11,10 +11,9 @@ from config.settings import WebsocketConfig
 logger = logging.getLogger(__name__)
 
 
-class EventType(enum.Enum):
-    WS_NEW_PACKET = 0
-    WS_SEND_COMMAND = 1
-    WS_REQUEST_SCHEMA = 2
+class EventType(str, Enum):
+    NEW_PACKET = "new_packet"
+    SEND_COMMAND = "send_command"
 
 
 class WebsocketPacket:
@@ -27,7 +26,7 @@ class WebsocketPacket:
             logger.warning("No type field in packet")
             return
 
-        self.event_type = EventType(int(evt_type))
+        self.event_type = evt_type
         self.data = data
 
 

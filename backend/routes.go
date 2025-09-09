@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -207,34 +208,6 @@ func GetPackets(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SendCommand(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-
-	var bodyStruct struct {
-		Command string `json:"command"`
-	}
-
-	err := parseRequestBody(r, &bodyStruct)
-	if err != nil {
-		http.Error(w, "Error parsing body", http.StatusInternalServerError)
-		log.Printf("Error parsing body: %v", err)
-		return
-	}
-
-	// Will just send to all connections for now
-	for _, ch := range Context.ConnectionChannels {
-		data, err := json.Marshal(WebsocketPacket{WSSendCommand, WSSendCommandPacket{bodyStruct.Command}})
-		if err != nil {
-			http.Error(w, "Error making packet", http.StatusInternalServerError)
-			log.Println("Failed to make packet")
-			return
-		}
-
-		ch <- string(data)
-	}
-
-}
-
 func PatchCommands(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -294,7 +267,7 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 	for _, dbCmd := range dbCommands {
 		var args map[string]CommandArg
 		_ = json.Unmarshal([]byte(dbCmd.Args), &args)
-		
+
 		commands = append(commands, Command{
 			Name:        dbCmd.Name,
 			Description: dbCmd.Description,
@@ -369,4 +342,46 @@ func DeleteCommand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, "Successfully deleted command")
+}
+
+func HandleCommand(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	var bodyStruct CommandPost
+
+	err := parseRequestBody(r, &bodyStruct)
+	if err != nil {
+		http.Error(w, "Error parsing body", http.StatusInternalServerError)
+		log.Printf("Error parsing body: %v", err)
+		return
+	}
+
+	dbCommand, err := DBGetCommandByName(bodyStruct.Command)
+	if err != nil {
+		http.Error(w, "Command doesn't exist in database", http.StatusInternalServerError)
+		log.Printf("Command doesn't exist in database")
+		return
+	}
+
+	log.Println(dbCommand.Args)
+	dbArgs := strings.SplitSeq(dbCommand.Args, ",")
+	log.Printf("%v", dbArgs)
+
+	// Validate to make sure all args are present & no unknown args
+	for v := range dbArgs {
+		argValue, ok := bodyStruct.Args[v]
+		if !ok {
+			log.Printf("Unknown arg in args, %v %v", bodyStruct.Args, v)
+			http.Error(w, "Failed to handle command", http.StatusInternalServerError)
+			return
+		}
+
+		if argValue == "" {
+			http.Error(w, "One of the provided args is empty", http.StatusInternalServerError)
+			log.Printf("A provided arg is empty, %v %v", argValue, v)
+			return
+		}
+	}
+
+	SendBoardCommand(bodyStruct)
 }

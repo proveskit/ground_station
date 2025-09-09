@@ -213,3 +213,12 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 
 	return commands, nil
 }
+
+func DBGetCommandByName(cmdName string) (DBCommand, error) {
+	var command DBCommand
+	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Args, &command.Description, &command.CmdString)
+	if err != nil {
+		return command, err
+	}
+	return command, nil
+}

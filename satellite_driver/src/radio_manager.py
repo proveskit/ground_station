@@ -85,7 +85,7 @@ class RadioManager():
             self.connected = False
 
             if "Resource busy" in str(e):
-                self.busy_ports.append(self.port)
+                self.busy_ports.append(board_port)
 
             raise e
 
@@ -177,8 +177,16 @@ class RadioManager():
     def on_websocket_data(self, packet: WebsocketPacket):
         if packet.event_type == EventType.WS_SEND_COMMAND:
             print(packet.data["command"])
-            self.write_to_serial(packet.data["command"])
-            self.write_to_serial("\r")
+
+            match packet.data["command"]:
+                case "change_radio_modulation":
+                    self.write_to_serial(packet.data["command"])
+                    self.write_to_serial("\r")
+                    self.write_to_serial(packet.data["args"]["modulation"])
+                    self.write_to_serial("\r")
+                case _:
+                    self.write_to_serial(packet.data["command"])
+                    self.write_to_serial("\r")
 
     def write_to_serial(self, data: str):
         if self.serial:
