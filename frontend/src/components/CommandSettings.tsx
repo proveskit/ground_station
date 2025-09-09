@@ -3,141 +3,21 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { Command } from "@/types/ApiTypes";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon } from "lucide-react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
 import { useParams } from "react-router";
-
-type Arg = {
-  required: boolean;
-};
-
-type Command = {
-  id?: number;
-  name: string;
-  description: string;
-  args: { [key: string]: Arg };
-  cmdString: string;
-};
-
-type Commands = Command[];
-
-const validateCommandString = (
-  command: Command,
-): { isValid: boolean; error?: string } => {
-  const { name, args, cmdString } = command;
-
-  if (!cmdString.includes(`$(name)`)) {
-    return { isValid: false, error: "Command string must include $(name)" };
-  }
-
-  const argNames = Object.keys(args);
-
-  const argMatches = [...cmdString.matchAll(/\$\(args\.(\w+)\)/g)];
-  const usedArgs = argMatches.map((match) => match[1]);
-
-  // First check if all used args are defined
-  for (const argName of usedArgs) {
-    if (!argNames.includes(argName)) {
-      return {
-        isValid: false,
-        error: `Argument "${argName}" used in command string but not defined`,
-      };
-    }
-  }
-
-  // Check if ALL defined args are used in the command string
-  for (const argName of argNames) {
-    if (!usedArgs.includes(argName)) {
-      return {
-        isValid: false,
-        error: `Argument "${argName}" must be used in command string`,
-      };
-    }
-  }
-
-  // Check ordering - if both required and optional args are used in the command string,
-  // all required args must appear before any optional args
-  const usedRequiredArgs = usedArgs.filter((argName) => args[argName].required);
-  const usedOptionalArgs = usedArgs.filter(
-    (argName) => !args[argName].required,
-  );
-
-  if (usedRequiredArgs.length > 0 && usedOptionalArgs.length > 0) {
-    const lastRequiredIndex = Math.max(
-      ...usedRequiredArgs.map((argName) =>
-        cmdString.indexOf(`$(args.${argName})`),
-      ),
-    );
-    const firstOptionalIndex = Math.min(
-      ...usedOptionalArgs.map((argName) =>
-        cmdString.indexOf(`$(args.${argName})`),
-      ),
-    );
-
-    if (lastRequiredIndex > firstOptionalIndex) {
-      return {
-        isValid: false,
-        error:
-          "All required arguments must appear before optional arguments in the command string",
-      };
-    }
-  }
-
-  return { isValid: true };
-};
 
 export default function CommandSettings() {
   let { mid } = useParams();
 
-  const [commands, setCommands] = useState<Commands>([]);
-  const [validationErrors, setValidationErrors] = useState<{
-    [index: number]: string;
-  }>({});
-  const timeoutRefs = useRef<{ [index: number]: NodeJS.Timeout }>({});
-
-  const debouncedValidate = useCallback(
-    (idx: number, command: Command, delay: number = 300) => {
-      // Clear existing timeout for this command
-      if (timeoutRefs.current[idx]) {
-        clearTimeout(timeoutRefs.current[idx]);
-      }
-
-      // Set new timeout
-      timeoutRefs.current[idx] = setTimeout(() => {
-        const validation = validateCommandString(command);
-
-        setValidationErrors((prev) => {
-          const newErrors = { ...prev };
-          if (validation.isValid) {
-            delete newErrors[idx];
-          } else {
-            newErrors[idx] = validation.error!;
-          }
-          return newErrors;
-        });
-
-        // Clean up timeout reference
-        delete timeoutRefs.current[idx];
-      }, delay);
-    },
-    [],
-  );
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(timeoutRefs.current).forEach((timeout) =>
-        clearTimeout(timeout),
-      );
-    };
-  }, []);
+  const [commands, setCommands] = useState<Command[]>([]);
 
   const handleNameChange = (idx: number, newName: string) => {
     const newCommands = [...commands];
     newCommands[idx].name = newName;
     setCommands(newCommands);
-    debouncedValidate(idx, newCommands[idx]);
   };
 
   const handleDescriptionChange = (idx: number, newDescription: string) => {
@@ -146,25 +26,19 @@ export default function CommandSettings() {
     setCommands(newCommands);
   };
 
-  const handleCmdStringChange = (idx: number, newCmdString: string) => {
-    const newCommands = [...commands];
-    newCommands[idx].cmdString = newCmdString;
-    setCommands(newCommands);
-    debouncedValidate(idx, newCommands[idx]);
-  };
-
   const handleAddArg = (idx: number) => {
     const newCommands = [...commands];
     const argName = `arg${Object.keys(newCommands[idx].args).length + 1}`;
-    newCommands[idx].args[argName] = { required: true };
+    newCommands[idx].args.push(argName);
     setCommands(newCommands);
   };
 
   const handleRemoveArg = (idx: number, argName: string) => {
     const newCommands = [...commands];
-    delete newCommands[idx].args[argName];
+    newCommands[idx].args = newCommands[idx].args.filter(
+      (arg) => arg !== argName,
+    );
     setCommands(newCommands);
-    debouncedValidate(idx, newCommands[idx]);
   };
 
   const handleArgNameChange = (
@@ -173,31 +47,22 @@ export default function CommandSettings() {
     newName: string,
   ) => {
     const newCommands = [...commands];
-    const argValue = newCommands[idx].args[oldName];
-    delete newCommands[idx].args[oldName];
-    newCommands[idx].args[newName] = argValue;
-    setCommands(newCommands);
-    debouncedValidate(idx, newCommands[idx]);
-  };
 
-  const handleArgRequiredChange = (
-    idx: number,
-    argName: string,
-    required: boolean,
-  ) => {
-    const newCommands = [...commands];
-    newCommands[idx].args[argName].required = required;
+    const oldIdx = newCommands[idx].args.indexOf(oldName);
+    if (oldIdx !== -1) {
+      newCommands[idx].args[oldIdx] = newName;
+    }
     setCommands(newCommands);
-    debouncedValidate(idx, newCommands[idx]);
   };
 
   const handleAddCommand = () => {
     const newCommands = [...commands];
     newCommands.push({
+      id: undefined,
+      mission_id: Number(mid),
       name: "",
       description: "",
-      args: {},
-      cmdString: "$(name)",
+      args: [],
     });
     setCommands(newCommands);
   };
@@ -218,16 +83,6 @@ export default function CommandSettings() {
     const newCommands = [...commands];
     newCommands.splice(idx, 1);
     setCommands(newCommands);
-
-    const newErrors = { ...validationErrors };
-    delete newErrors[idx];
-    setValidationErrors(newErrors);
-
-    // Clear timeout if exists
-    if (timeoutRefs.current[idx]) {
-      clearTimeout(timeoutRefs.current[idx]);
-      delete timeoutRefs.current[idx];
-    }
   };
 
   const { isPending, isError, error } = useQuery({
@@ -240,27 +95,7 @@ export default function CommandSettings() {
       const dbCommands = await response.json();
       console.log(dbCommands);
 
-      const commands: Commands = dbCommands.map((dbCmd: any) => ({
-        id: dbCmd.id,
-        name: dbCmd.name,
-        description: dbCmd.description,
-        args: JSON.parse(dbCmd.args),
-        cmdString: dbCmd.cmd_string,
-      }));
-
-      setCommands(commands);
-
-      // Validate all loaded commands immediately (no debounce for initial load)
-      commands.forEach((command, idx) => {
-        const validation = validateCommandString(command);
-        if (!validation.isValid) {
-          setValidationErrors((prev) => ({
-            ...prev,
-            [idx]: validation.error!,
-          }));
-        }
-      });
-
+      setCommands(dbCommands);
       return commands;
     },
     enabled: !!mid,
@@ -269,7 +104,7 @@ export default function CommandSettings() {
   });
 
   const commandsMutation = useMutation({
-    mutationFn: async (commands: Commands) => {
+    mutationFn: async (commands: Command[]) => {
       const response = await fetch("/api/patch/commands", {
         method: "PATCH",
         headers: {
@@ -281,7 +116,6 @@ export default function CommandSettings() {
             name: cmd.name,
             description: cmd.description,
             args: cmd.args,
-            cmd_string: cmd.cmdString,
           })),
         }),
       });
@@ -310,7 +144,6 @@ export default function CommandSettings() {
           name: command.name,
           description: command.description,
           args: command.args,
-          cmd_string: command.cmdString,
         }),
       });
 
@@ -396,59 +229,33 @@ export default function CommandSettings() {
               </div>
 
               <div className="space-y-2">
-                {Object.entries(command.args).map(([argName, arg]) => (
-                  <div
-                    key={argName}
-                    className="flex gap-2 items-center bg-neutral-700 p-2 rounded"
-                  >
-                    <Input
-                      value={argName}
-                      onChange={(e) =>
-                        handleArgNameChange(idx, argName, e.target.value)
-                      }
-                      placeholder="arg_name"
-                      className="flex-1"
-                    />
-                    <label className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        checked={arg.required}
-                        onChange={(e) =>
-                          handleArgRequiredChange(
-                            idx,
-                            argName,
-                            e.target.checked,
-                          )
-                        }
-                      />
-                      Required
-                    </label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveArg(idx, argName)}
+                {command.args.length === 0 ? (
+                  <p>No args</p>
+                ) : (
+                  command.args.map((argName) => (
+                    <div
+                      key={argName}
+                      className="flex gap-2 items-center bg-neutral-700 p-2 rounded"
                     >
-                      <MinusIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <Input
+                        value={argName}
+                        onChange={(e) =>
+                          handleArgNameChange(idx, argName, e.target.value)
+                        }
+                        placeholder="arg_name"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveArg(idx, argName)}
+                      >
+                        <MinusIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
               </div>
-            </div>
-
-            <div className="mb-2">
-              <label className="block text-sm font-medium mb-1">
-                Command String
-              </label>
-              <Input
-                value={command.cmdString}
-                onChange={(e) => handleCmdStringChange(idx, e.target.value)}
-                placeholder="$(name) $(args.arg1) $(args.arg2)"
-              />
-              {validationErrors[idx] && (
-                <p className="text-red-400 text-sm mt-1">
-                  {validationErrors[idx]}
-                </p>
-              )}
             </div>
           </div>
         ))}
@@ -474,9 +281,7 @@ export default function CommandSettings() {
           }}
           className="mt-4"
           disabled={
-            Object.keys(validationErrors).length > 0 ||
-            commandsMutation.isPending ||
-            updateCommandMutation.isPending
+            commandsMutation.isPending || updateCommandMutation.isPending
           }
         >
           {commandsMutation.isPending || updateCommandMutation.isPending

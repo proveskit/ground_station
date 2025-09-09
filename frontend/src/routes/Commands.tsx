@@ -46,6 +46,8 @@ export default function Commands() {
     commandsFetchFn(Number(mid)),
   );
 
+  console.log(commandsQuery.data);
+
   const cmdMutation = useMutation({
     mutationFn: async (cmd: {
       command: string;

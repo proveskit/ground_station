@@ -19,12 +19,9 @@ export type Packet = {
 };
 
 export type Command = {
-  id: number;
+  id: number | undefined;
   mission_id: number;
   name: string;
   description?: string;
   args: string[];
-  cmd_string: string;
 };
-
-export type CommandArgs = { [key: string]: { required: boolean } };

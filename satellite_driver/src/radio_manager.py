@@ -163,7 +163,7 @@ class RadioManager():
                         logger.warn("Websocket not connected for some reason")
                     else:
                         self.ws.send_message(
-                            json.dumps({"mission_id": self.config.mission_id, "packet": parsed_data["response"]}), EventType.WS_NEW_PACKET)
+                            json.dumps({"mission_id": self.config.mission_id, "packet": parsed_data["response"]}), EventType.NEW_PACKET)
 
                 except Exception as e:
                     logger.error(e)
@@ -182,8 +182,11 @@ class RadioManager():
                     self.write_to_serial("\r")
                     self.write_to_serial(packet.payload["args"]["modulation"])
                     self.write_to_serial("\r")
+                case "reset":
+                    self.write_to_serial("1")
+                    self.write_to_serial("\r")
                 case _:
-                    self.write_to_serial(packet.data["command"])
+                    self.write_to_serial(packet.payload["command"])
                     self.write_to_serial("\r")
 
     def write_to_serial(self, data: str):

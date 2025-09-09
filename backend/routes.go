@@ -211,8 +211,8 @@ func PatchCommands(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var bodyStruct struct {
-		MissionId int       `json:"missionId"`
-		Commands  []Command `json:"commands"`
+		MissionId int         `json:"missionId"`
+		Commands  []DBCommand `json:"commands"`
 	}
 
 	err := parseRequestBody(r, &bodyStruct)
@@ -230,7 +230,7 @@ func PatchCommands(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = DBAddCommand(bodyStruct.MissionId, cmd.Name, cmd.Description, string(argsJson))
+		err = DBUpdateCommand(bodyStruct.MissionId, cmd.Name, cmd.Description, string(argsJson))
 		if err != nil {
 			http.Error(w, "Error adding command to database", http.StatusInternalServerError)
 			log.Printf("Error adding command: %v", err)
@@ -261,17 +261,7 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DBCommand to Command
-	var commands []Command
-	for _, dbCmd := range dbCommands {
-		commands = append(commands, Command{
-			Name:        dbCmd.Name,
-			Description: dbCmd.Description,
-			Args:        dbCmd.Args,
-		})
-	}
-
-	jsonData, err := json.Marshal(commands)
+	jsonData, err := json.Marshal(dbCommands)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Failed to process commands", http.StatusInternalServerError)
@@ -345,10 +335,12 @@ func HandleCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(bodyStruct.Command)
+
 	dbCommand, err := DBGetCommandByName(bodyStruct.Command)
 	if err != nil {
 		http.Error(w, "Command doesn't exist in database", http.StatusInternalServerError)
-		log.Printf("Command doesn't exist in database")
+		log.Printf("Command doesn't exist in database: %v", err)
 		return
 	}
 

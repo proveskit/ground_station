@@ -51,12 +51,6 @@ type DBPacket struct {
 	PacketData string    `json:"packet_data,omitempty"`
 }
 
-type Command struct {
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Args        []string `json:"args,omitempty"`
-}
-
 type CommandPost struct {
 	Command string            `json:"command"`
 	Args    map[string]string `json:"args"`
@@ -67,5 +61,5 @@ type DBCommand struct {
 	MissionId   int      `json:"mission_id,omitempty"`
 	Name        string   `json:"name,omitempty"`
 	Description string   `json:"description,omitempty"`
-	Args        []string `json:"args,omitempty"`
+	Args        []string `json:"args"`
 }

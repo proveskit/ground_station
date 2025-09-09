@@ -229,7 +229,7 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 
 func DBGetCommandByName(cmdName string) (DBCommand, error) {
 	var command DBCommand
-	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Description, &command.Args)
+	err := Database.QueryRow(context.Background(), "SELECT id, mission_id, name, description, args FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Description, &command.Args)
 	if err != nil {
 		return command, err
 	}
