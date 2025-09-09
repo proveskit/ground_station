@@ -154,10 +154,10 @@ func DBGetPackets(missionId int, page int) ([]DBPacket, error) {
 
 }
 
-func DBAddCommand(missionId int, name string, description string, args string, cmdString string) error {
+func DBAddCommand(missionId int, name string, description string, args string) error {
 	_, err := Database.Exec(context.Background(),
-		"INSERT INTO commands (mission_id, name, description, args, cmd_string) VALUES ($1, $2, $3, $4, $5)",
-		missionId, name, description, args, cmdString)
+		"INSERT INTO commands (mission_id, name, description, args) VALUES ($1, $2, $3, $4)",
+		missionId, name, description, args)
 	if err != nil {
 		log.Printf("Error adding command: %v", err)
 		return err
@@ -165,10 +165,10 @@ func DBAddCommand(missionId int, name string, description string, args string, c
 	return nil
 }
 
-func DBUpdateCommand(id int, name string, description string, args string, cmdString string) error {
+func DBUpdateCommand(id int, name string, description string, args string) error {
 	_, err := Database.Exec(context.Background(),
-		"UPDATE commands SET name = $2, description = $3, args = $4, cmd_string = $5 WHERE id = $1",
-		id, name, description, args, cmdString)
+		"UPDATE commands SET name = $2, description = $3, args = $4 WHERE id = $1",
+		id, name, description, args)
 	if err != nil {
 		log.Printf("Error updating command: %v", err)
 		return err
@@ -189,7 +189,7 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 	commands := []DBCommand{}
 
 	rows, err := Database.Query(context.Background(),
-		"SELECT id, mission_id, name, description, args, cmd_string FROM commands WHERE mission_id = $1 ORDER BY id",
+		"SELECT id, mission_id, name, description, args FROM commands WHERE mission_id = $1 ORDER BY id",
 		missionId)
 	if err != nil {
 		log.Printf("Error querying commands: %v", err)
@@ -201,7 +201,7 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 		var cmd DBCommand
 		var argString string
 
-		err := rows.Scan(&cmd.Id, &cmd.MissionId, &cmd.Name, &cmd.Description, &argString, &cmd.CmdString)
+		err := rows.Scan(&cmd.Id, &cmd.MissionId, &cmd.Name, &cmd.Description, &argString)
 		if err != nil {
 			log.Printf("Error scanning command row: %v", err)
 			return commands, err
@@ -229,7 +229,7 @@ func DBGetCommands(missionId int) ([]DBCommand, error) {
 
 func DBGetCommandByName(cmdName string) (DBCommand, error) {
 	var command DBCommand
-	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Description, &command.Args, &command.CmdString)
+	err := Database.QueryRow(context.Background(), "SELECT * FROM commands WHERE name = $1", cmdName).Scan(&command.Id, &command.MissionId, &command.Name, &command.Description, &command.Args)
 	if err != nil {
 		return command, err
 	}

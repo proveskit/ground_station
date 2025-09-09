@@ -230,7 +230,7 @@ func PatchCommands(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = DBAddCommand(bodyStruct.MissionId, cmd.Name, cmd.Description, string(argsJson), cmd.CmdString)
+		err = DBAddCommand(bodyStruct.MissionId, cmd.Name, cmd.Description, string(argsJson))
 		if err != nil {
 			http.Error(w, "Error adding command to database", http.StatusInternalServerError)
 			log.Printf("Error adding command: %v", err)
@@ -268,7 +268,6 @@ func GetCommands(w http.ResponseWriter, r *http.Request) {
 			Name:        dbCmd.Name,
 			Description: dbCmd.Description,
 			Args:        dbCmd.Args,
-			CmdString:   dbCmd.CmdString,
 		})
 	}
 
@@ -301,7 +300,7 @@ func UpdateCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = DBUpdateCommand(bodyStruct.Id, bodyStruct.Name, bodyStruct.Description, string(argsJson), bodyStruct.CmdString)
+	err = DBUpdateCommand(bodyStruct.Id, bodyStruct.Name, bodyStruct.Description, string(argsJson))
 	if err != nil {
 		http.Error(w, "Error updating command", http.StatusInternalServerError)
 		log.Printf("Error updating command: %v", err)

@@ -54,7 +54,6 @@ type DBPacket struct {
 type Command struct {
 	Name        string   `json:"name,omitempty"`
 	Description string   `json:"description,omitempty"`
-	CmdString   string   `json:"cmd_string,omitempty"`
 	Args        []string `json:"args,omitempty"`
 }
 
@@ -69,5 +68,4 @@ type DBCommand struct {
 	Name        string   `json:"name,omitempty"`
 	Description string   `json:"description,omitempty"`
 	Args        []string `json:"args,omitempty"`
-	CmdString   string   `json:"cmd_string,omitempty"`
 }

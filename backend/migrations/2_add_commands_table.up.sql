@@ -5,7 +5,6 @@ CREATE TABLE commands (
   name VARCHAR(64) UNIQUE NOT NULL,
   description VARCHAR(256),
   args JSONB NOT NULL,
-  cmd_string TEXT NOT NULL,
   
   CONSTRAINT fk_mission FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE
 );
